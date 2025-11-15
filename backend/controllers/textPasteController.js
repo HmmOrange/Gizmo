@@ -1,4 +1,5 @@
 import Paste from "../models/TextPaste.js";
+import { v4 as uuidv4 } from "uuid";
 
 // Create a new paste
 export const createPaste = async (req, res) => {
@@ -28,10 +29,7 @@ export const getAllPastes = async (req, res) => {
 
     const pastes = await Paste.find({
       exposure: "PUBLIC",
-      $or: [
-        { date_of_expiry: null },
-        { date_of_expiry: { $gt: now } },
-      ],
+      $or: [{ date_of_expiry: null }, { date_of_expiry: { $gt: now } }],
       date_deleted: null,
     }).sort({ date_created: -1 });
 
@@ -48,10 +46,7 @@ export const getPasteById = async (req, res) => {
 
     const paste = await Paste.findOne({
       id: req.params.id,
-      $or: [
-        { date_of_expiry: null },
-        { date_of_expiry: { $gt: now } },
-      ],
+      $or: [{ date_of_expiry: null }, { date_of_expiry: { $gt: now } }],
       date_deleted: null,
     });
 

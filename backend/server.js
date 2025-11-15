@@ -14,7 +14,7 @@ app.use(cors());
 connectDB();
 
 // Routes
-app.use("/create", textPasteRoutes);
+app.use("/paste", textPasteRoutes);
 app.get('/health', (req, res) => res.send('OK'));
 
 // Start server
