@@ -1,9 +1,12 @@
-const express = require('express');
-const router = express.Router();
-const pasteController = require('../controllers/textPasteController');
+import express from "express";
+import {createPaste, getAllPastes, getPasteById} from "../controllers/textPasteController.js";
 
-router.post('/', pasteController.createPaste);
-router.get('/', pasteController.getAllPastes);
-router.get('/:id', pasteController.getPasteById);
+const app = express.Router();
 
-module.exports = router;
+app.use(express.json());
+
+app.post('/', createPaste);
+app.get('/', getAllPastes);
+app.get('/:id', getPasteById);
+
+export default app;

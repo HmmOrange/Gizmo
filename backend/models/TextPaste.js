@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from "mongoose";
 
 const PasteSchema = new mongoose.Schema({
     id: {
@@ -34,4 +34,4 @@ const PasteSchema = new mongoose.Schema({
     }
 });
 
-module.exports = mongoose.model('Paste', PasteSchema);
+export default mongoose.model("Paste", PasteSchema);
