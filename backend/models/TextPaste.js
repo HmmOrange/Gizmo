@@ -27,11 +27,6 @@ const PasteSchema = new mongoose.Schema({
   date_of_expiry: Date,
   date_deleted: Date,
   remote_address: String,
-  last_viewed: Date,
-  views: {
-    type: Number,
-    default: 0,
-  },
 });
 
 export default mongoose.model("Paste", PasteSchema);

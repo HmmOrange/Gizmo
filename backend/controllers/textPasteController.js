@@ -22,7 +22,7 @@ export const createPaste = async (req, res) => {
   }
 };
 
-// Get all public, not deleted, not expired pastes
+// Get all public, not expired pastes
 export const getAllPastes = async (req, res) => {
   try {
     const now = new Date();
@@ -53,9 +53,6 @@ export const getPasteById = async (req, res) => {
     if (!paste) {
       return res.status(404).json({ message: "Paste not found or expired" });
     }
-
-    paste.views++;
-    paste.last_viewed = now;
     await paste.save();
 
     res.json(paste);

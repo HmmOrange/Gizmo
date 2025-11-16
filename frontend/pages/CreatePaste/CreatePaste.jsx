@@ -35,7 +35,7 @@ export default function CreatePaste() {
     });
 
     const json = await res.json();
-    setCreateResult(json);
+    setCreateResult(`http://localhost:5173/share/${json.id}`);
   };
 
   const loadAll = async () => {
