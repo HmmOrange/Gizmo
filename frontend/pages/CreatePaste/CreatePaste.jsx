@@ -6,8 +6,8 @@ export default function CreatePaste() {
   const [form, setForm] = useState({
     title: "",
     content: "",
-    exposure: "PUBLIC",
     date_of_expiry: "",
+    password: "",         // <-- add password to form state
   });
 
   const [createResult, setCreateResult] = useState(null);
@@ -24,9 +24,9 @@ export default function CreatePaste() {
     const payload = {
       title: form.title,
       content: form.content,
-      exposure: form.exposure,
     };
     if (form.date_of_expiry) payload.date_of_expiry = form.date_of_expiry;
+    if (form.password) payload.password = form.password; // <-- send password if present
 
     const res = await fetch(API_BASE, {
       method: "POST",
@@ -35,13 +35,12 @@ export default function CreatePaste() {
     });
 
     const json = await res.json();
-    setCreateResult(json);
+    setCreateResult(`http://localhost:5173/share/${json.id}`);
   };
 
   const loadAll = async () => {
     const res = await fetch(API_BASE);
     const json = await res.json();
-    // setAllPastes(json.pastes || []);
     setAllPastes(Array.isArray(json) ? json : json.pastes || []);
   };
 
@@ -79,16 +78,15 @@ export default function CreatePaste() {
           style={{ minHeight: "80px" }}
         />
 
-        <label htmlFor="exposure">Exposure</label>
-        <select
-          id="exposure"
-          name="exposure"
-          value={form.exposure}
+        <label htmlFor="password">Password (optional for private paste)</label>
+        <input
+          type="password"
+          id="password"
+          name="password"
+          value={form.password}
           onChange={handleChange}
-        >
-          <option value="PUBLIC">Public</option>
-          <option value="PRIVATE">Private</option>
-        </select>
+          placeholder="Set a password to make this paste private"
+        />
 
         <label htmlFor="date_of_expiry">Expiry Date (optional)</label>
         <input
