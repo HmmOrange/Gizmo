@@ -1,10 +1,12 @@
 import { StrictMode } from 'react'
+import ReactDOM from "react-dom/client";
 import { createRoot } from 'react-dom/client'
 import './index.css'
-import Landing from './pages/Landing.jsx'
+import Landing from './pages/Landing/Landing.jsx'
+import AppRoutes from './routes/AppRoutes.jsx'
 
-createRoot(document.getElementById('root')).render(
+ReactDOM.createRoot(document.getElementById("root")).render(
   <StrictMode>
-    <Landing />
+    <AppRoutes />
   </StrictMode>,
 )
