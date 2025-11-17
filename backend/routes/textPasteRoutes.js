@@ -1,5 +1,5 @@
 import express from "express";
-import {createPaste, getAllPastes, getPasteById} from "../controllers/textPasteController.js";
+import { createPaste, getAllPastes, getPasteById } from "../controllers/textPasteController.js";
 
 const app = express.Router();
 

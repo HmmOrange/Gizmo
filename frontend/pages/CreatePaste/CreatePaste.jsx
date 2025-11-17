@@ -7,7 +7,8 @@ export default function CreatePaste() {
     title: "",
     content: "",
     date_of_expiry: "",
-    password: "",         // <-- add password to form state
+    password: "",
+    slug: "",
   });
 
   const [createResult, setCreateResult] = useState(null);
@@ -26,8 +27,8 @@ export default function CreatePaste() {
       content: form.content,
     };
     if (form.date_of_expiry) payload.date_of_expiry = form.date_of_expiry;
-    if (form.password) payload.password = form.password; // <-- send password if present
-
+    if (form.password) payload.password = form.password;
+    if (form.slug) payload.slug = form.slug;
     const res = await fetch(API_BASE, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -35,7 +36,7 @@ export default function CreatePaste() {
     });
 
     const json = await res.json();
-    setCreateResult(`http://localhost:5173/share/${json.id}`);
+    setCreateResult(`http://localhost:5173/share/${json.slug}`);
   };
 
   const loadAll = async () => {
@@ -95,6 +96,16 @@ export default function CreatePaste() {
           name="date_of_expiry"
           value={form.date_of_expiry}
           onChange={handleChange}
+        />
+
+        <label htmlFor="slug">Custom URL (optional, e.g. my-note)</label>
+        <input
+          type="text"
+          id="slug"
+          name="slug"
+          value={form.slug || ""}
+          onChange={handleChange}
+          placeholder="Enter a custom URL"
         />
 
         <button type="submit">Create Paste</button>

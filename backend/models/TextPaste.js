@@ -6,10 +6,7 @@ const PasteSchema = new mongoose.Schema({
     required: true,
     unique: true,
   },
-  version: {
-    type: Number,
-    default: 1,
-  },
+  slug: { type: String, unique: true, sparse: true },
   title: String,
   content: {
     type: String,

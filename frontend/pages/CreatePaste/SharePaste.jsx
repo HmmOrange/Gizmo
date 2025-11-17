@@ -76,9 +76,6 @@ export default function SharePaste() {
                         padding: "1em",
                         borderRadius: "4px"
                     }}>{paste.content}</pre>
-                    <div style={{ marginTop: "1em", fontSize: "0.9em", color: "#aaa" }}>
-                        ID: {paste.id} &nbsp;|&nbsp; {paste.views} views
-                    </div>
                     {paste.date_of_expiry && (
                         <div style={{ fontSize: "0.8em", color: "#d66" }}>
                             Expires: {new Date(paste.date_of_expiry).toLocaleString()}
