@@ -3,6 +3,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Landing from "../pages/Landing/Landing";
 import CreatePaste from "../pages/CreatePaste/CreatePaste.jsx";
 import SharePaste from "../pages/CreatePaste/SharePaste.jsx";
+import CreateImage from "../pages/CreateImage/CreateImage.jsx";
+import ShareImage from "../pages/CreateImage/ShareImage.jsx";
 
 export default function AppRoutes() {
   return (
@@ -11,6 +13,8 @@ export default function AppRoutes() {
         <Route path="/" element={<Landing />} />
         <Route path="/share/:id" element={<SharePaste />} />
         <Route path="/create/paste" element={<CreatePaste />} />
+        <Route path="/create/image" element={<CreateImage />} />
+        <Route path="/share/image/:id" element={<ShareImage />}/>
       </Routes>
     </BrowserRouter>
   );
