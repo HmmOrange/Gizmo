@@ -28,7 +28,7 @@ rồi `npm run dev` hoặc `node server.js`
 
 ## Frontend
 ```
-cd ..
+cd frontend
 ```
 
 rồi `npm run dev`

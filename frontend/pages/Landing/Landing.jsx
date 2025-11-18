@@ -1,19 +1,32 @@
 import { useNavigate } from "react-router-dom";
-
 import './Landing.css'
+import NavBar from "../../components/NavBar/NavBar";
 
 export default function Landing() {
   const navigate = useNavigate();
-  return (
-    
-      <div>
-        <button onClick={() => navigate("/create/paste")} >
-          Create paste
-        </button>
-        <button onClick={() => navigate("/create/image")} >
-          Create image
-        </button>
-      </div>
 
+  return (
+    <>
+      <NavBar />
+      <div className="landing-container">
+        
+        <button 
+          className="big-action-btn primary" 
+          onClick={() => navigate("/create/paste")}
+        >
+          <div className="icon-wrapper">📝</div>
+          <h2>Create Paste</h2>
+        </button>
+
+        <button 
+          className="big-action-btn secondary" 
+          onClick={() => navigate("/create/image")}
+        >
+          <div className="icon-wrapper">🖼️</div>
+          <h2>Upload Image</h2>
+        </button>
+
+      </div>
+    </>
   )
 }

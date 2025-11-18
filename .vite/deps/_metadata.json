@@ -1,8 +1,34 @@
 {
-  "hash": "d9299408",
-  "configHash": "bf7a244b",
-  "lockfileHash": "f7294bcd",
-  "browserHash": "0de7e81c",
-  "optimized": {},
-  "chunks": {}
+  "hash": "39f96a3a",
+  "configHash": "cf11e38e",
+  "lockfileHash": "e3b0c442",
+  "browserHash": "40032afe",
+  "optimized": {
+    "react": {
+      "src": "../../frontend/node_modules/react/index.js",
+      "file": "react.js",
+      "fileHash": "6b761973",
+      "needsInterop": true
+    },
+    "react-dom/client": {
+      "src": "../../frontend/node_modules/react-dom/client.js",
+      "file": "react-dom_client.js",
+      "fileHash": "9556d58c",
+      "needsInterop": true
+    },
+    "react-router-dom": {
+      "src": "../../frontend/node_modules/react-router-dom/dist/index.mjs",
+      "file": "react-router-dom.js",
+      "fileHash": "500d37ae",
+      "needsInterop": false
+    }
+  },
+  "chunks": {
+    "chunk-PMKRN55B": {
+      "file": "chunk-PMKRN55B.js"
+    },
+    "chunk-GNNDSPIO": {
+      "file": "chunk-GNNDSPIO.js"
+    }
+  }
 }

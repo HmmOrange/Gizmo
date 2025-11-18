@@ -4,13 +4,22 @@ import bcrypt from "bcrypt";
 // Create a new paste
 export const createPaste = async (req, res) => {
   try {
-    const { title, content, password, date_of_expiry } = req.body;
+    const { title, content, password, date_of_expiry, slug } = req.body;
+
+    if (slug) {
+      const exists = await Paste.findOne({ slug });
+      if (exists) {
+        return res.status(409).json({ error: "Slug already in use." });
+      }
+    }
     let hashedPassword = "";
     if (password) {
       hashedPassword = await bcrypt.hash(password, 10);
     }
+    let id = uuidv4();
     const paste = new Paste({
-      id: uuidv4(),
+      id: id,
+      slug: slug || id,
       title,
       content,
       password: hashedPassword,
@@ -45,11 +54,11 @@ export const getAllPastes = async (req, res) => {
 // Get paste by ID
 export const getPasteById = async (req, res) => {
   try {
+    // console.log("Fetching paste with slug:", req.params.id);
     const now = new Date();
     const paste = await Paste.findOne({
-      id: req.params.id,
+      slug: req.params.id,
       $or: [{ date_of_expiry: null }, { date_of_expiry: { $gt: now } }],
-      date_deleted: null,
     });
 
     if (!paste) {

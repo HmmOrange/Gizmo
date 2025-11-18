@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import './CreateImage.css';
-
+import NavBar from '../../components/NavBar/NavBar';
 const CreateImage = () => {
     const [imageSrc, setImageSrc] = useState('');
     const [originalSrc, setOriginalSrc] = useState('');
@@ -170,103 +170,107 @@ const CreateImage = () => {
     }
 
     return (
-        <div className={`create-image-container ${theme}`}>
-            <div className="header">
-                <h1>Create Image</h1>
-                <select value={theme} onChange={(e) => setTheme(e.target.value)} className="theme-selector">
-                    <option value="theme-light">Light Theme</option>
-                    <option value="theme-dark">Dark Theme</option>
-                </select>
-            </div>
+        <>
+            <NavBar />
+            <div className={`create-image-container ${theme}`}>
+                <div className="header">
+                    <h1>Create Image</h1>
+                    <select value={theme} onChange={(e) => setTheme(e.target.value)} className="theme-selector">
+                        <option value="theme-light">Light Theme</option>
+                        <option value="theme-dark">Dark Theme</option>
+                    </select>
+                </div>
 
-            <div className="editor-grid">
-                <div className="left-panel">
-                    <div className="upload-group">
-                        <label className="upload-btn file-upload">
-                            <i className="icon-upload"></i>
-                            <input
-                                type="file"
-                                accept="image/*"
-                                onChange={handleImageUpload}
-                                style={{ display: 'none' }}
-                            />
-                        </label>
+                <div className="editor-grid">
+                    <div className="left-panel">
+                        <div className="upload-group">
+                            <label className="upload-btn file-upload">
+                                <i className="icon-upload"></i>
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleImageUpload}
+                                    style={{ display: 'none' }}
+                                />
+                            </label>
 
-                        <div className="url-upload">
-                            <input
-                                type="text"
-                                placeholder="Paste URL"
-                                value={urlInput}
-                                onChange={(e) => setUrlInput(e.target.value)}
-                                onKeyPress={(e) => e.key === 'Enter' && loadFromUrl()}
-                                className="url-input"
-                            />
-                            <button onClick={loadFromUrl} className="btn-url-go" disabled={!urlInput.trim()}>
-                                <i className="icon-go"></i>
+                            <div className="url-upload">
+                                <input
+                                    type="text"
+                                    placeholder="Paste URL"
+                                    value={urlInput}
+                                    onChange={(e) => setUrlInput(e.target.value)}
+                                    onKeyPress={(e) => e.key === 'Enter' && loadFromUrl()}
+                                    className="url-input"
+                                />
+                                <button onClick={loadFromUrl} className="btn-url-go" disabled={!urlInput.trim()}>
+                                    <i className="icon-go"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="image-preview">
+                            {imageSrc ? (
+                                <img src={imageSrc} alt="Edited" className="edited-image" />
+                            ) : (
+                                <div className="placeholder">
+                                    No image uploaded.
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="action-buttons">
+                            <button onClick={resetImage} className="btn btn-warning" disabled={!originalSrc}>
+                                Reset to Original
                             </button>
+                            <button onClick={downloadImage} className="btn btn-success" disabled={!imageSrc}>
+                                Download
+                            </button>
+                            <button onClick={createPaste} className="btn btn-info" disabled={!imageSrc}>
+                                Create Paste
+                            </button>
+                        </div>
+                        <div className="pastes-config">
+                            <label for="image-name">Image name:</label>
+                            <input type='text' id="image-name" name="Image Name"></input>
                         </div>
                     </div>
 
-                    <div className="image-preview">
-                        {imageSrc ? (
-                            <img src={imageSrc} alt="Edited" className="edited-image" />
-                        ) : (
-                            <div className="placeholder">
-                                No image uploaded.
-                            </div>
-                        )}
-                    </div>
+                    <div className="right-panel">
+                        <div className="control-group">
+                            <label>Brightness: {brightness}%</label>
+                            <input type="range" min="0" max="200" value={brightness} onChange={(e) => setBrightness(e.target.value)} />
+                        </div>
+                        <div className="control-group">
+                            <label>Opacity: {opacity}%</label>
+                            <input type="range" min="0" max="100" value={opacity} onChange={(e) => setOpacity(e.target.value)} />
+                        </div>
+                        <div className="control-group">
+                            <label>Blur: {blur}px</label>
+                            <input type="range" min="0" max="10" value={blur} onChange={(e) => setBlur(e.target.value)} />
+                        </div>
+                        <div className="control-group">
+                            <label>Contrast: {contrast}%</label>
+                            <input type="range" min="0" max="200" value={contrast} onChange={(e) => setContrast(e.target.value)} />
+                        </div>
 
-                    <div className="action-buttons">
-                        <button onClick={resetImage} className="btn btn-warning" disabled={!originalSrc}>
-                            Reset to Original
-                        </button>
-                        <button onClick={downloadImage} className="btn btn-success" disabled={!imageSrc}>
-                            Download
-                        </button>
-                        <button onClick={createPaste} className="btn btn-info" disabled={!imageSrc}>
-                            Create Paste
-                        </button>
-                    </div>
-                    <div className="pastes-config">
-                        <label for="image-name">Image name:</label>
-                        <input type='text' id="image-name" name="Image Name"></input>
+                        <div className="button-group">
+                            <button onClick={invertColors} className="btn btn-secondary" disabled={!imageSrc}>
+                                Invert
+                            </button>
+                            <button onClick={rotateImage} className="btn btn-secondary" disabled={!imageSrc}>
+                                Rotate 90°
+                            </button>
+                        </div>
                     </div>
                 </div>
 
-                <div className="right-panel">
-                    <div className="control-group">
-                        <label>Brightness: {brightness}%</label>
-                        <input type="range" min="0" max="200" value={brightness} onChange={(e) => setBrightness(e.target.value)} />
-                    </div>
-                    <div className="control-group">
-                        <label>Opacity: {opacity}%</label>
-                        <input type="range" min="0" max="100" value={opacity} onChange={(e) => setOpacity(e.target.value)} />
-                    </div>
-                    <div className="control-group">
-                        <label>Blur: {blur}px</label>
-                        <input type="range" min="0" max="10" value={blur} onChange={(e) => setBlur(e.target.value)} />
-                    </div>
-                    <div className="control-group">
-                        <label>Contrast: {contrast}%</label>
-                        <input type="range" min="0" max="200" value={contrast} onChange={(e) => setContrast(e.target.value)} />
-                    </div>
-
-                    <div className="button-group">
-                        <button onClick={invertColors} className="btn btn-secondary" disabled={!imageSrc}>
-                            Invert
-                        </button>
-                        <button onClick={rotateImage} className="btn btn-secondary" disabled={!imageSrc}>
-                            Rotate 90°
-                        </button>
-                    </div>
-                </div>
+                <footer className="footer">
+                    
+                </footer>
             </div>
-
-            <footer className="footer">
-                
-            </footer>
-        </div>
+        </>
+        
     );
 };
 
