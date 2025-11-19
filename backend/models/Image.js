@@ -1,37 +1,28 @@
 import mongoose, { Schema, model } from "mongoose";
 
-const PasteSchema = new Schema(
+const ImageSchema = new Schema(
   {
-    pasteId: {
-      type: String,
-      required: true,
-      unique: true,
-    },
     slug: {
       type: String,
+      required: true,
       unique: true,
-      sparse: true,
-      trim: true,
+      index: true,
     },
-    title: {
+    imageUrl: { type: String, required: true },
+    imageSize: { type: Number, required: true },
+    imageType: {
       type: String,
-      required: true,
-      trim: true,
-    },
-    content: {
-      type: String,
+      enum: ["png", "jpg", "jpeg", "gif", "webp", "svg", "avif"],
       required: true,
     },
-    hashedPassword: {
-      type: String,
-      default: null,
-    },
+    hashedPassword: { type: String, default: null },
     exposure: {
       type: String,
       enum: ["public", "password_protected", "unlisted", "private"],
       default: "public",
       required: true,
     },
+    caption: { type: String, default: "" },
     views: { type: Number, default: 0 },
     expiredAt: { type: Date, default: null },
     authorId: {
@@ -39,10 +30,14 @@ const PasteSchema = new Schema(
       default: null,
       index: true,
     },
+    albumId: {
+      type: String,
+      default: null,
+    },
   },
   { timestamps: true }
 );
 
-PasteSchema.index({ expiredAt: 1 }, { expireAfterSeconds: 0 });
+ImageSchema.index({ expiredAt: 1 }, { expireAfterSeconds: 0 });
 
-export default model("Paste", PasteSchema);
+export default model("Image", ImageSchema);
