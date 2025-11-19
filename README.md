@@ -8,7 +8,7 @@ Project nhóm 5
 - Nguyễn Quang Dũng - 23021497
 - Lê Tùng Dương - 23021509
 - Đỗ Thành Đạt - 23021517
-- Nguyến Tiến Đạt - 23021521
+- Nguyễn Tiến Đạt - 23021521
 - Phạm Hoàng An Khánh - 23021597
 
 # Cách chạy
@@ -28,7 +28,7 @@ rồi `npm run dev` hoặc `node server.js`
 
 ## Frontend
 ```
-cd ..
+cd frontend
 ```
 
 rồi `npm run dev`
