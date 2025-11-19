@@ -1,16 +1,16 @@
-import { useState } from "react";
+import { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Login.css";
 import toast from "react-hot-toast";
-import { useContext } from "react";
 import { AuthContext } from "../../context/AuthContext";
 
 export default function Login() {
   const navigate = useNavigate();
+  const { login } = useContext(AuthContext);
+
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const { login } = useContext(AuthContext);
 
   async function handleLogin(e) {
     e.preventDefault();
@@ -19,7 +19,7 @@ export default function Login() {
     const res = await fetch("/api/auth/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, password })
+      body: JSON.stringify({ username, password }),
     });
 
     const data = await res.json();
@@ -32,7 +32,11 @@ export default function Login() {
     login(data.token);
     toast.success("Logged in successfully!");
     setTimeout(() => navigate("/"), 1000);
+  }
 
+  function handleMicrosoftLogin() {
+    setOauthLoading(true);
+    window.location.href = "/api/auth/oauth/microsoft";
   }
 
   return (
@@ -44,7 +48,7 @@ export default function Login() {
           type="text"
           placeholder="Username"
           value={username}
-          onChange={e => setUsername(e.target.value)}
+          onChange={(e) => setUsername(e.target.value)}
           autoComplete="username"
           required
         />
@@ -53,7 +57,7 @@ export default function Login() {
           type="password"
           placeholder="Password"
           value={password}
-          onChange={e => setPassword(e.target.value)}
+          onChange={(e) => setPassword(e.target.value)}
           autoComplete="current-password"
           required
         />
@@ -66,6 +70,14 @@ export default function Login() {
       </form>
 
       <div className="oauth-container">
+        <button
+          className="auth-btn microsoft"
+          onClick={handleMicrosoftLogin}
+          disabled={oauthLoading}
+        >
+          {oauthLoading ? "Redirecting..." : "Continue with Microsoft"}
+        </button>
+
         <button className="auth-btn google disabled" disabled>
           Continue with Google (coming soon)
         </button>
