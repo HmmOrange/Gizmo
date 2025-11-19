@@ -54,17 +54,17 @@ const HamburgerIcon = ({
 
 // Default navigation links
 const defaultNavigationLinks = [
-  { href: '#', label: 'Home', active: true },
-  { href: '#feed', label: 'Feed' },
-  { href: '#dashboard', label: 'Dashboard' },
-  { href: '#about', label: 'About' },
+  { href: '/', label: 'Home', active: true },
+  { href: '/feed', label: 'Feed' },
+  { href: '/dashboard', label: 'Dashboard' },
+  { href: '/about', label: 'About' },
 ];
 
 export const Navbar01 = React.forwardRef((
   {
     className,
     logo = <Logo />,
-    logoHref = '#',
+    logoHref = '/',
     navigationLinks = defaultNavigationLinks,
     signInText = 'Log In',
     signInHref = '/login',
@@ -144,7 +144,10 @@ export const Navbar01 = React.forwardRef((
                   {navigationLinks.map((link, index) => (
                     <NavigationMenuItem key={index} className="w-full">
                       <button
-                        onClick={(e) => e.preventDefault()}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handleNavigation(link.href);
+                        }}
                         className={cn(
                           "flex w-full items-center rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground cursor-pointer no-underline",
                           link.active 
@@ -163,7 +166,10 @@ export const Navbar01 = React.forwardRef((
           {/* Main nav */}
           <div className="flex items-center gap-6">
             <button
-              onClick={(e) => e.preventDefault()}
+              onClick={(e) => {
+                e.preventDefault();
+                handleNavigation(logoHref);
+              }}
               className="flex items-center space-x-2 text-primary hover:text-primary/90 transition-colors cursor-pointer">
               <div className="text-2xl">
                 {logo}
@@ -177,7 +183,10 @@ export const Navbar01 = React.forwardRef((
                 {navigationLinks.map((link, index) => (
                   <NavigationMenuItem key={index}>
                     <button
-                      onClick={(e) => e.preventDefault()}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleNavigation(link.href);
+                      }}
                       className={cn(
                         "group inline-flex h-9 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 cursor-pointer no-underline",
                         link.active 
