@@ -10,6 +10,7 @@ export default function CreatePaste() {
     date_of_expiry: "",
     password: "",
     slug: "",
+    exposure: "public", // mặc định
   });
 
   const [createResult, setCreateResult] = useState(null);
@@ -31,15 +32,27 @@ export default function CreatePaste() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // convert FE → BE enum
+    const convertExposure =
+      form.exposure === "password"
+        ? "password_protected"
+        : form.exposure;
+
     const payload = {
       title: form.title,
       content: form.content,
+      exposure: convertExposure,
     };
+
     if (form.date_of_expiry) payload.expiredAt = form.date_of_expiry;
-    if (form.password) payload.password = form.password;
     if (form.slug) payload.slug = form.slug;
+
+    // chỉ gửi password nếu exposure là password_protected
+    if (convertExposure === "password_protected" && form.password) {
+      payload.password = form.password;
+    }
+
     const headers = { "Content-Type": "application/json" };
-    console.log(token)
     if (token) headers["Authorization"] = "Bearer " + token;
 
     const res = await fetch(API_BASE, {
@@ -49,7 +62,6 @@ export default function CreatePaste() {
     });
 
     const json = await res.json();
-    console.log(json);
     if (res.ok) {
       setCreateResult(`http://localhost:5173/share/${json.slug}`);
     } else {
@@ -80,6 +92,7 @@ export default function CreatePaste() {
       <div style={{ fontFamily: "Arial", margin: "2em" }}>
         <h2>Create a Paste</h2>
         <form onSubmit={handleSubmit}>
+
           <label htmlFor="title">Title</label>
           <input
             type="text"
@@ -99,15 +112,35 @@ export default function CreatePaste() {
             style={{ minHeight: "80px" }}
           />
 
-          <label htmlFor="password">Password (optional)</label>
-          <input
-            type="password"
-            id="password"
-            name="password"
-            value={form.password}
+          {/* Exposure */}
+          <label htmlFor="exposure">Exposure</label>
+          <select
+            id="exposure"
+            name="exposure"
+            value={form.exposure}
             onChange={handleChange}
-            placeholder="Set a password to make this paste private"
-          />
+          >
+            <option value="public">Public (visible in feed)</option>
+            <option value="unlisted">Unlisted (no feed/search)</option>
+            <option value="password">Password Protected</option>
+            <option value="private">Private (only you)</option>
+          </select>
+
+          {/* Only show password field when needed */}
+          {form.exposure === "password" && (
+            <>
+              <label htmlFor="password">Password</label>
+              <input
+                type="password"
+                id="password"
+                name="password"
+                value={form.password}
+                onChange={handleChange}
+                placeholder="Enter password"
+                required
+              />
+            </>
+          )}
 
           <label htmlFor="date_of_expiry">Expiry Date (optional)</label>
           <input
@@ -123,7 +156,7 @@ export default function CreatePaste() {
             type="text"
             id="slug"
             name="slug"
-            value={form.slug || ""}
+            value={form.slug}
             onChange={handleChange}
             placeholder="Enter a custom URL"
           />
@@ -132,7 +165,14 @@ export default function CreatePaste() {
         </form>
 
         {createResult && (
-          <div style={{ marginTop: "1em", background: "#f7f7f7", padding: "1em", border: "1px solid #ccc" }}>
+          <div
+            style={{
+              marginTop: "1em",
+              background: "#f7f7f7",
+              padding: "1em",
+              border: "1px solid #ccc",
+            }}
+          >
             {typeof createResult === "string" ? (
               <a href={createResult}>{createResult}</a>
             ) : (
@@ -147,7 +187,15 @@ export default function CreatePaste() {
         <div style={{ marginTop: "1em" }}>
           {allPastes.length
             ? allPastes.map((p) => (
-              <div key={p.slug} style={{ background: "#f7f7f7", padding: "1em", border: "1px solid #ccc", marginBottom: "1em" }}>
+              <div
+                key={p.slug}
+                style={{
+                  background: "#f7f7f7",
+                  padding: "1em",
+                  border: "1px solid #ccc",
+                  marginBottom: "1em",
+                }}
+              >
                 <b>{p.title || "No Title"}</b>
                 <br />
                 {p.content}
@@ -169,8 +217,19 @@ export default function CreatePaste() {
         <button onClick={fetchPaste}>Fetch</button>
 
         {fetchResult && (
-          <div style={{ marginTop: "1em", background: "#f7f7f7", padding: "1em", border: "1px solid #ccc" }}>
-            {fetchResult.error ? `ERROR: ${fetchResult.error}` : <pre>{JSON.stringify(fetchResult, null, 2)}</pre>}
+          <div
+            style={{
+              marginTop: "1em",
+              background: "#f7f7f7",
+              padding: "1em",
+              border: "1px solid #ccc",
+            }}
+          >
+            {fetchResult.error ? (
+              `ERROR: ${fetchResult.error}`
+            ) : (
+              <pre>{JSON.stringify(fetchResult, null, 2)}</pre>
+            )}
           </div>
         )}
       </div>
