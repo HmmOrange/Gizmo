@@ -63,13 +63,13 @@
   background-color: #f3f4f6;
 }
 
-/* Signup Button (Prominent) */
-.btn-signup {
+/* SignUp Button (Prominent) */
+.btn-SignUp {
   background-color: #3b82f6; /* Matches your Landing page primary color */
   border: none;
   color: white;
 }
 
-.btn-signup:hover {
+.btn-SignUp:hover {
   background-color: #2563eb;
 }
