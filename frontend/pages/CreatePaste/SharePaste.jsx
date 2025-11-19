@@ -11,7 +11,6 @@ export default function SharePaste() {
     const [needsPassword, setNeedsPassword] = useState(false);
     const [error, setError] = useState("");
 
-    // Fetch paste
     const fetchPaste = async (pw = "") => {
         setLoading(true);
         let url = `${API_BASE}/${encodeURIComponent(id)}`;
@@ -44,7 +43,6 @@ export default function SharePaste() {
         fetchPaste(password);
     };
 
-    // EXPORT FUNCTION (no password needed)
     const handleExport = async (format) => {
         const url = `${API_BASE}/${encodeURIComponent(id)}/export?format=${format}`;
 
@@ -57,7 +55,6 @@ export default function SharePaste() {
         const blob = await response.blob();
         const link = document.createElement("a");
 
-        // set correct file extension
         const ext = format === "raw" ? "md" : format;
         link.download = `${id}.${ext}`;
 
@@ -65,6 +62,19 @@ export default function SharePaste() {
         link.click();
 
         window.URL.revokeObjectURL(link.href);
+    };
+
+    const handleSummary = async () => {
+        const url = `${API_BASE}/${encodeURIComponent(id)}/summary`;
+
+        const res = await fetch(url);
+        const json = await res.json();
+
+        if (json.summary) {
+            alert("SUMMARY:\n\n" + json.summary);
+        } else {
+            alert("Failed to summarize");
+        }
     };
 
     return (
@@ -79,7 +89,6 @@ export default function SharePaste() {
         }}>
             {loading && <div>Loading...</div>}
 
-            {/* PASSWORD REQUIRED */}
             {!loading && needsPassword && (
                 <form onSubmit={onSubmitPassword}>
                     <div style={{ marginBottom: "1em", color: "#d66" }}>
@@ -97,7 +106,6 @@ export default function SharePaste() {
                 </form>
             )}
 
-            {/* SHOW PASTE */}
             {!loading && paste && (
                 <>
                     <h2 style={{ color: "#97c5f7" }}>
@@ -120,7 +128,6 @@ export default function SharePaste() {
                         </div>
                     )}
 
-                    {/* EXPORT BUTTONS */}
                     <div style={{ marginTop: "1.5em" }}>
                         <button
                             onClick={() => handleExport("raw")}
@@ -142,10 +149,16 @@ export default function SharePaste() {
                             Export PDF
                         </button>
                     </div>
+
+                    <button
+                        onClick={handleSummary}
+                        style={{ marginLeft: 10, background: "#4caf50", color: "#fff" }}
+                    >
+                        Summarize
+                    </button>
                 </>
             )}
 
-            {/* ERROR */}
             {error && !needsPassword && (
                 <div style={{ color: "#d66", fontWeight: "bold" }}>
                     ERROR: {error}

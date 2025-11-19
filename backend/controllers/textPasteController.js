@@ -3,7 +3,9 @@ import { v4 as uuidv4 } from "uuid";
 import bcrypt from "bcrypt";
 import puppeteer from "puppeteer";
 import PDFDocument from "pdfkit";
-import fs from "fs";
+import dotenv from "dotenv";
+dotenv.config();
+
 // Create a new paste
 export const createPaste = async (req, res) => {
   try {
@@ -82,7 +84,6 @@ export const getPasteById = async (req, res) => {
   }
 };
 
-// Export paste as raw markdown, PNG, or PDF
 export const exportPaste = async (req, res) => {
   try {
     const { id } = req.params;
@@ -125,3 +126,13 @@ export const exportPaste = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 }
+
+export const summarizePaste = async (req, res) => {
+  try {
+
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error summarizing paste" });
+  }
+};
