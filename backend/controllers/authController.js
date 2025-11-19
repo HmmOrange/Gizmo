@@ -18,8 +18,11 @@ export async function signup(req, res) {
 
   await User.create({
     username,
-    password_hash: hash,
+    hashedPassword: hash,
+    authMethod: null,   // explicit so format stays consistent
+    storageUsed: 0,     // optional since default exists
   });
+
 
   return res.status(201).json({ message: "account_created" });
 }
@@ -37,7 +40,7 @@ export async function login(req, res) {
     return res.status(401).json({ message: "invalid_credentials" });
   }
 
-  const match = await bcrypt.compare(password, user.password_hash);
+  const match = await bcrypt.compare(password, user.hashedPassword);
   if (!match) {
     return res.status(401).json({ message: "invalid_credentials" });
   }
