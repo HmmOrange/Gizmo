@@ -11,12 +11,16 @@ export default function SharePaste() {
     const [needsPassword, setNeedsPassword] = useState(false);
     const [error, setError] = useState("");
 
+    const token = localStorage.getItem("token");
     const fetchPaste = async (pw = "") => {
         setLoading(true);
         let url = `${API_BASE}/${encodeURIComponent(id)}`;
         if (pw) url += `?password=${encodeURIComponent(pw)}`;
 
-        const res = await fetch(url);
+        const headers = {};
+        if (token) headers["Authorization"] = "Bearer " + token;
+
+        const res = await fetch(url, { headers });
         const json = await res.json();
 
         if (json.error === "Password required or incorrect") {

@@ -26,13 +26,12 @@ export const createPaste = async (req, res) => {
       slug: slug || id,
       title,
       content,
-      password: hashedPassword,
+      hashedPassword: hashedPassword,
       exposure: exposure || "public",
       expiredAt: expiredAt ? new Date(expiredAt) : null,
       date_created: new Date(),
       authorId: req.user?.user_id || null,
     });
-    console.log(paste)
     await paste.save();
     res.status(201).json(paste);
   } catch (err) {
@@ -41,7 +40,7 @@ export const createPaste = async (req, res) => {
 }
 
 // Get all public, not expired pastes
-export const getAllPastes = async (req, res) => {
+export const getPublicPastes = async (req, res) => {
   try {
     const now = new Date();
 
@@ -69,16 +68,20 @@ export const getPasteById = async (req, res) => {
     if (!paste) {
       return res.status(404).json({ message: "Paste not found or expired" });
     }
-
-    if (paste.password) {
+    console.log(paste)
+    if (paste.exposure === "private") {
+      if (!req.user || req.user?.user_id !== paste.authorId) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+    } else if (paste.exposure === "password_protected") {
       const inputPassword = req.query.password || "";
       console.log("inputPassword:", inputPassword)
-      if (!bcrypt.compareSync(inputPassword, paste.password)) {
+      if (!bcrypt.compareSync(inputPassword, paste.hashedPassword)) {
         console.log("wrong")
         return res.status(403).json({ error: "Password required or incorrect" });
       }
     }
-    console.log(paste)
+
     res.json(paste);
   } catch (err) {
     res.status(500).json({ message: err.message });
