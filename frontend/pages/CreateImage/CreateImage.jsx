@@ -1,277 +1,273 @@
-import React, { useState, useRef, useEffect } from 'react';
-import './CreateImage.css';
-import NavBar from '../../components/NavBar/NavBar';
-const CreateImage = () => {
-    const [imageSrc, setImageSrc] = useState('');
-    const [originalSrc, setOriginalSrc] = useState('');
-    const [urlInput, setUrlInput] = useState('');
-    const [brightness, setBrightness] = useState(100);
-    const [opacity, setOpacity] = useState(100);
-    const [blur, setBlur] = useState(0);
-    const [contrast, setContrast] = useState(100);
-    const [theme, setTheme] = useState('theme-light');
-    const [time, setTime] = useState(new Date().toLocaleTimeString());
+// CreateImage.jsx
+import React, { useRef, useEffect, useState, useCallback } from "react";
 
-    const canvasRef = useRef(document.createElement('canvas'));
-    const currentImageRef = useRef(null);
+const CreateImage = ({ onSave, onClose }) => {
+  const canvasRef = useRef(null);
+  const ctxRef = useRef(null);
+  const isDrawing = useRef(false);
+  const backgroundImgRef = useRef(null);
 
-    
+  // State
+  const [tool, setTool] = useState("pen");           // "pen" | "eraser"
+  const [color, setColor] = useState("#000000");
+  const [size, setSize] = useState(5);
+  const [history, setHistory] = useState([]);        // mảng dataURL
+  const [historyStep, setHistoryStep] = useState(-1);
 
-    // Áp dụng bộ lọc
-    const applyFilters = (forceValues = {}) => {
-        if (!currentImageRef.current) return;
+  // Lưu trạng thái canvas vào history
+  const saveState = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const data = canvas.toDataURL();
 
-        const canvas = canvasRef.current;
-        const ctx = canvas.getContext('2d');
-        const img = currentImageRef.current;
+    setHistory((prev) => {
+      const newHist = prev.slice(0, historyStep + 1);
+      newHist.push(data);
+      if (newHist.length > 50) newHist.shift();
+      setHistoryStep(newHist.length - 1);
+      return newHist;
+    });
+  }, [historyStep]);
 
-        const b = forceValues.brightness ?? brightness;
-        const o = forceValues.opacity ?? opacity;
-        const bl = forceValues.blur ?? blur;
-        const c = forceValues.contrast ?? contrast;
+  // Khôi phục từ history
+  const restoreState = (step) => {
+    const canvas = canvasRef.current;
+    const ctx = ctxRef.current;
+    if (!canvas || !ctx || history[step] === undefined) return;
 
-        canvas.width = img.width;
-        canvas.height = img.height;
-
-        ctx.filter = `brightness(${b}%) opacity(${o}%) blur(${bl}px) contrast(${c}%)`.trim();
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(img, 0, 0);
-
-        setImageSrc(canvas.toDataURL());
+    const img = new Image();
+    img.onload = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0);
     };
+    img.src = history[step];
+  };
 
-    // Cập nhật khi thay đổi bộ lọc
-    useEffect(() => {
-        if (currentImageRef.current) applyFilters();
-    }, [brightness, opacity, blur, contrast]);
-
-    // Tải ảnh
-    const loadImage = (src) => {
-        const img = new Image();
-        img.crossOrigin = 'anonymous';
-
-        img.onload = () => {
-            currentImageRef.current = img;
-            setOriginalSrc(src);
-            // Reset sliders + apply ngay
-            setBrightness(100);
-            setOpacity(100);
-            setBlur(0);
-            setContrast(100);
-            // Gọi applyFilters với giá trị mặc định
-            applyFilters({ brightness: 100, opacity: 100, blur: 0, contrast: 100 });
-        };
-
-        img.onerror = () => alert('Không thể tải ảnh. Vui lòng kiểm tra URL hoặc file.');
-        img.src = src;
-    };
-
-    const handleImageUpload = (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = (ev) => loadImage(ev.target.result);
-        reader.onerror = () => alert('Lỗi đọc file!');
-        reader.readAsDataURL(file);
-    };
-
-    const loadFromUrl = () => {
-        const url = urlInput.trim();
-        if (url) {
-            loadImage(url);
-            setUrlInput(''); // Xóa input sau khi tải
-        }
-    };
-
-    // RESET: Bấm 1 lần → ảnh + slider về gốc NGAY
-    const resetImage = () => {
-        if (!originalSrc || !currentImageRef.current) return;
-
-        // Reset sliders
-        setBrightness(100);
-        setOpacity(100);
-        setBlur(0);
-        setContrast(100);
-
-        // Tải lại ảnh gốc và áp dụng filter mặc định NGAY
-        const img = new Image();
-        img.crossOrigin = 'anonymous';
-        img.onload = () => {
-            currentImageRef.current = img;
-            applyFilters({ brightness: 100, opacity: 100, blur: 0, contrast: 100 });
-        };
-        img.src = originalSrc;
-    };
-
-    // Invert
-    const invertColors = () => {
-        if (!currentImageRef.current) return;
-        const img = currentImageRef.current;
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        canvas.width = img.width;
-        canvas.height = img.height;
-        ctx.filter = 'invert(100%)';
-        ctx.drawImage(img, 0, 0);
-
-        const newImg = new Image();
-        newImg.onload = () => {
-            currentImageRef.current = newImg;
-            applyFilters();
-        };
-        newImg.src = canvas.toDataURL();
-    };
-
-    // Rotate
-    const rotateImage = () => {
-        if (!currentImageRef.current) return;
-        const img = currentImageRef.current;
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        canvas.width = img.height;
-        canvas.height = img.width;
-        ctx.translate(canvas.width / 2, canvas.height / 2);
-        ctx.rotate(Math.PI / 2);
-        ctx.drawImage(img, -img.width / 2, -img.height / 2);
-
-        const newImg = new Image();
-        newImg.onload = () => {
-            currentImageRef.current = newImg;
-            applyFilters();
-        };
-        newImg.src = canvas.toDataURL();
-    };
-
-    // Download
-    const downloadImage = () => {
-        if (!imageSrc) return;
-        const a = document.createElement('a');
-        a.href = canvasRef.current.toDataURL('image/png');
-        a.download = 'edited_image.png';
-        a.click();
-    };
-
-    // Share
-    // const shareImage = () => {
-    //     if (!imageSrc) return;
-    //     if (navigator.share) {
-    //         navigator.share({ title: 'Edited Image', url: imageSrc });
-    //     } else {
-    //         alert('Share URL: ' + imageSrc);
-    //     }
-    // };
-
-    const createPaste = () => {
-        if (!imageSrc) {
-            console.log("Chưa có ảnh");
-            return;
-        }
-        console.log(imageSrc);
+  const undo = () => {
+    if (historyStep > 0) {
+      setHistoryStep(historyStep - 1);
+      restoreState(historyStep - 1);
     }
+  };
 
-    return (
-        <>
-            <NavBar />
-            <div className={`create-image-container ${theme}`}>
-                <div className="header">
-                    <h1>Create Image</h1>
-                    <select value={theme} onChange={(e) => setTheme(e.target.value)} className="theme-selector">
-                        <option value="theme-light">Light Theme</option>
-                        <option value="theme-dark">Dark Theme</option>
-                    </select>
-                </div>
+  const redo = () => {
+    if (historyStep < history.length - 1) {
+      setHistoryStep(historyStep + 1);
+      restoreState(historyStep + 1);
+    }
+  };
 
-                <div className="editor-grid">
-                    <div className="left-panel">
-                        <div className="upload-group">
-                            <label className="upload-btn file-upload">
-                                <i className="icon-upload"></i>
-                                <input
-                                    type="file"
-                                    accept="image/*"
-                                    onChange={handleImageUpload}
-                                    style={{ display: 'none' }}
-                                />
-                            </label>
+  // Khởi tạo canvas
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    canvas.width = 900;
+    canvas.height = 600;
+    const ctx = canvas.getContext("2d");
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctxRef.current = ctx;
 
-                            <div className="url-upload">
-                                <input
-                                    type="text"
-                                    placeholder="Paste URL"
-                                    value={urlInput}
-                                    onChange={(e) => setUrlInput(e.target.value)}
-                                    onKeyPress={(e) => e.key === 'Enter' && loadFromUrl()}
-                                    className="url-input"
-                                />
-                                <button onClick={loadFromUrl} className="btn-url-go" disabled={!urlInput.trim()}>
-                                    <i className="icon-go"></i>
-                                </button>
-                            </div>
-                        </div>
+    // nền trắng + lưu bước đầu
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    saveState();
+  }, []);
 
-                        <div className="image-preview">
-                            {imageSrc ? (
-                                <img src={imageSrc} alt="Edited" className="edited-image" />
-                            ) : (
-                                <div className="placeholder">
-                                    No image uploaded.
-                                </div>
-                            )}
-                        </div>
+  // Cập nhật style khi thay đổi công cụ/màu/kích thước
+  useEffect(() => {
+    if (!ctxRef.current) return;
+    ctxRef.current.strokeStyle = tool === "eraser" ? "#ffffff" : color;
+    ctxRef.current.lineWidth = size;
+  }, [tool, color, size]);
 
-                        <div className="action-buttons">
-                            <button onClick={resetImage} className="btn btn-warning" disabled={!originalSrc}>
-                                Reset to Original
-                            </button>
-                            <button onClick={downloadImage} className="btn btn-success" disabled={!imageSrc}>
-                                Download
-                            </button>
-                            <button onClick={createPaste} className="btn btn-info" disabled={!imageSrc}>
-                                Create Paste
-                            </button>
-                        </div>
-                        <div className="pastes-config">
-                            <label for="image-name">Image name:</label>
-                            <input type='text' id="image-name" name="Image Name"></input>
-                        </div>
-                    </div>
+  // Vẽ ảnh nền
+  const drawBackgroundImage = (img) => {
+    const canvas = canvasRef.current;
+    const ctx = ctxRef.current;
+    if (!canvas || !ctx) return;
 
-                    <div className="right-panel">
-                        <div className="control-group">
-                            <label>Brightness: {brightness}%</label>
-                            <input type="range" min="0" max="200" value={brightness} onChange={(e) => setBrightness(e.target.value)} />
-                        </div>
-                        <div className="control-group">
-                            <label>Opacity: {opacity}%</label>
-                            <input type="range" min="0" max="100" value={opacity} onChange={(e) => setOpacity(e.target.value)} />
-                        </div>
-                        <div className="control-group">
-                            <label>Blur: {blur}px</label>
-                            <input type="range" min="0" max="10" value={blur} onChange={(e) => setBlur(e.target.value)} />
-                        </div>
-                        <div className="control-group">
-                            <label>Contrast: {contrast}%</label>
-                            <input type="range" min="0" max="200" value={contrast} onChange={(e) => setContrast(e.target.value)} />
-                        </div>
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-                        <div className="button-group">
-                            <button onClick={invertColors} className="btn btn-secondary" disabled={!imageSrc}>
-                                Invert
-                            </button>
-                            <button onClick={rotateImage} className="btn btn-secondary" disabled={!imageSrc}>
-                                Rotate 90°
-                            </button>
-                        </div>
-                    </div>
-                </div>
+    const scale = Math.min(canvas.width / img.width, canvas.height / img.height);
+    const w = img.width * scale;
+    const h = img.height * scale;
+    const x = (canvas.width - w) / 2;
+    const y = (canvas.height - h) / 2;
 
-                <footer className="footer">
-                    
-                </footer>
-            </div>
-        </>
-        
+    ctx.drawImage(img, x, y, w, h);
+    backgroundImgRef.current = { img, x, y, w, h };
+    saveState();
+  };
+
+  // Bắt đầu vẽ
+  const start = (e) => {
+    const canvas = canvasRef.current;
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX || e.touches[0].clientX;
+    const y = e.clientY || e.touches[0].clientY;
+
+    ctxRef.current.beginPath();
+    ctxRef.current.moveTo((x - rect.left) * (canvas.width / rect.width), (y - rect.top) * (canvas.height / rect.height));
+    isDrawing.current = true;
+
+    // lưu trạng thái trước khi vẽ nét mới
+    saveState();
+  };
+
+  const draw = (e) => {
+    if (!isDrawing.current) return;
+    const canvas = canvasRef.current;
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX || e.touches[0].clientX;
+    const y = e.clientY || e.touches[0].clientY;
+
+    ctxRef.current.lineTo(
+      (x - rect.left) * (canvas.width / rect.width),
+      (y - rect.top) * (canvas.height / rect.height)
     );
+    ctxRef.current.stroke();
+  };
+
+  const stop = () => {
+    if (isDrawing.current) {
+      ctxRef.current.closePath();
+      isDrawing.current = false;
+    }
+  };
+
+  // Xóa toàn bộ
+  const clearCanvas = () => {
+    const ctx = ctxRef.current;
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+    if (backgroundImgRef.current) {
+      const { img, x, y, w, h } = backgroundImgRef.current;
+      ctx.drawImage(img, x, y, w, h);
+    }
+    saveState();
+  };
+
+  // Upload image lên
+  const handleUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const img = new Image();
+      img.onload = () => drawBackgroundImage(img);
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  };
+
+  // Download Image
+  const handleSave = () => {
+    const dataURL = canvasRef.current.toDataURL("image/png");
+    if (onSave) {
+      onSave(dataURL);
+    } else {
+      const a = document.createElement("a");
+      a.href = dataURL;
+      a.download = "drawing.png";
+      a.click();
+    }
+  };
+
+  // Shortcut Ctrl+Z / Ctrl+Y
+  useEffect(() => {
+    const handler = (e) => {
+      if (e.ctrlKey || e.metaKey) {
+        if (e.key === "z") { e.preventDefault(); undo(); }
+        if (e.key === "y") { e.preventDefault(); redo(); }
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [historyStep, history]);
+
+  return (
+    <div style={{ padding: 20, fontFamily: "Arial, sans-serif", background: "#f0f0f0", minHeight: "100vh" }}>
+      <h2 style={{ margin: "0 0 15px" }}>Share Image</h2>
+
+      {/* Toolbar */}
+      <div style={{ marginBottom: 15, display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center" }}>
+        {/* Công cụ */}
+        <button onClick={() => setTool("pen")} style={{ fontWeight: tool === "pen" ? "bold" : "normal" }}>
+          Brush
+        </button>
+        <button onClick={() => setTool("eraser")} style={{ fontWeight: tool === "eraser" ? "bold" : "normal" }}>
+          Eraser
+        </button>
+
+        {/* Màu */}
+        <input type="color" value={color} onChange={(e) => setColor(e.target.value)} disabled={tool === "eraser"} />
+
+        {/* Kích thước */}
+        <input
+          type="range"
+          min="1"
+          max="50"
+          value={size}
+          onChange={(e) => setSize(+e.target.value)}
+          style={{ width: 120 }}
+        />
+        <span>{size}px</span>
+
+        {/* Undo / Redo */}
+        <button onClick={undo} disabled={historyStep <= 0}>
+          Undo
+        </button>
+        <button onClick={redo} disabled={historyStep >= history.length - 1}>
+          Redo
+        </button>
+
+        {/* Erase all */}
+        <button onClick={clearCanvas} style={{ background: "#ff5c5c", color: "white" }}>
+          Erase all
+        </button>
+
+        {/* Upload image */}
+        <label>
+          Upload image
+          <input type="file" accept="image/*" onChange={handleUpload} style={{ display: "none" }} />
+        </label>
+
+        {/* Lưu */}
+        <button onClick={handleSave} style={{ background: "#4CAF50", color: "white" }}>
+          Download Image
+        </button>
+
+        {onClose && (
+          <button onClick={onClose} style={{ background: "#999", color: "white" }}>
+            Đóng
+          </button>
+        )}
+      </div>
+
+      {/* Canvas */}
+      <div style={{ background: "white", boxShadow: "0 4px 20px rgba(0,0,0,0.1)", display: "inline-block" }}>
+        <canvas
+          ref={canvasRef}
+          style={{ border: "2px solid #ddd", cursor: tool === "eraser" ? "crosshair" : "crosshair" }}
+          onMouseDown={start}
+          onMouseMove={draw}
+          onMouseUp={stop}
+          onMouseLeave={stop}
+          onTouchStart={start}
+          onTouchMove={draw}
+          onTouchEnd={stop}
+        />
+      </div>
+
+      <div style={{ marginTop: 10, fontSize: "14px", color: "#555" }}>
+        <p>
+          <strong>Shortcut:</strong> Ctrl+Z (Undo) • Ctrl+Y (Redo)
+        </p>
+      </div>
+    </div>
+  );
 };
 
 export default CreateImage;
