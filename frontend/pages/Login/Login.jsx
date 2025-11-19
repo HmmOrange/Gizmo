@@ -11,7 +11,7 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const { login } = useContext(AuthContext);
-  
+
   async function handleLogin(e) {
     e.preventDefault();
     setError("");
@@ -25,10 +25,10 @@ export default function Login() {
     const data = await res.json();
 
     if (!res.ok) {
-        setError(data.message || "Login failed");
-        return;
+      setError(data.message || "Login failed");
+      return;
     }
-
+    localStorage.setItem("token", data.token);
     login(data.token);
     toast.success("Logged in successfully!");
     setTimeout(() => navigate("/"), 1000);

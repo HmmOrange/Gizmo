@@ -9,7 +9,7 @@ dotenv.config();
 // Create a new paste
 export const createPaste = async (req, res) => {
   try {
-    const { title, content, password, date_of_expiry, slug } = req.body;
+    const { title, content, password, expiredAt, slug, exposure } = req.body;
 
     if (slug) {
       const exists = await Paste.findOne({ slug });
@@ -17,21 +17,22 @@ export const createPaste = async (req, res) => {
         return res.status(409).json({ error: "Slug already in use." });
       }
     }
-    let hashedPassword = "";
+    let hashedPassword = null;
     if (password) {
       hashedPassword = await bcrypt.hash(password, 10);
     }
     let id = uuidv4();
     const paste = new Paste({
-      id: id,
       slug: slug || id,
       title,
       content,
       password: hashedPassword,
-      date_of_expiry: date_of_expiry ? new Date(date_of_expiry) : undefined,
+      exposure: exposure || "public",
+      expiredAt: expiredAt ? new Date(expiredAt) : null,
       date_created: new Date(),
+      authorId: req.user?.user_id || null,
     });
-
+    console.log(paste)
     await paste.save();
     res.status(201).json(paste);
   } catch (err) {
@@ -77,7 +78,7 @@ export const getPasteById = async (req, res) => {
         return res.status(403).json({ error: "Password required or incorrect" });
       }
     }
-
+    console.log(paste)
     res.json(paste);
   } catch (err) {
     res.status(500).json({ message: err.message });

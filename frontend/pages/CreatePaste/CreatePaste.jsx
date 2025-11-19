@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import NavBar from "../../components/NavBar/NavBar";
+
 export default function CreatePaste() {
   const API_BASE = "http://localhost:3000/paste";
 
@@ -16,27 +17,44 @@ export default function CreatePaste() {
   const [fetchId, setFetchId] = useState("");
   const [fetchResult, setFetchResult] = useState(null);
 
+  const [token, setToken] = useState(null);
+
+  useEffect(() => {
+    const savedToken = localStorage.getItem("token");
+    if (savedToken) setToken(savedToken);
+  }, []);
+
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     const payload = {
       title: form.title,
       content: form.content,
     };
-    if (form.date_of_expiry) payload.date_of_expiry = form.date_of_expiry;
+    if (form.date_of_expiry) payload.expiredAt = form.date_of_expiry;
     if (form.password) payload.password = form.password;
     if (form.slug) payload.slug = form.slug;
+    const headers = { "Content-Type": "application/json" };
+    console.log(token)
+    if (token) headers["Authorization"] = "Bearer " + token;
+
     const res = await fetch(API_BASE, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers,
       body: JSON.stringify(payload),
     });
 
     const json = await res.json();
-    setCreateResult(`http://localhost:5173/share/${json.slug}`);
+    console.log(json);
+    if (res.ok) {
+      setCreateResult(`http://localhost:5173/share/${json.slug}`);
+    } else {
+      setCreateResult({ error: json.message || json.error });
+    }
   };
 
   const loadAll = async () => {
@@ -58,7 +76,7 @@ export default function CreatePaste() {
 
   return (
     <>
-      <NavBar />
+      <NavBar token={token} setToken={setToken} />
       <div style={{ fontFamily: "Arial", margin: "2em" }}>
         <h2>Create a Paste</h2>
         <form onSubmit={handleSubmit}>
@@ -81,7 +99,7 @@ export default function CreatePaste() {
             style={{ minHeight: "80px" }}
           />
 
-          <label htmlFor="password">Password (optional for private paste)</label>
+          <label htmlFor="password">Password (optional)</label>
           <input
             type="password"
             id="password"
@@ -100,7 +118,7 @@ export default function CreatePaste() {
             onChange={handleChange}
           />
 
-          <label htmlFor="slug">Custom URL (optional, e.g. my-note)</label>
+          <label htmlFor="slug">Custom URL (optional)</label>
           <input
             type="text"
             id="slug"
@@ -113,46 +131,31 @@ export default function CreatePaste() {
           <button type="submit">Create Paste</button>
         </form>
 
-        <div id="createResult">
-          {createResult && (
-            <div
-              style={{
-                background: "#f7f7f7",
-                padding: "1em",
-                border: "1px solid #ccc",
-                marginTop: "1em",
-              }}
-            >
+        {createResult && (
+          <div style={{ marginTop: "1em", background: "#f7f7f7", padding: "1em", border: "1px solid #ccc" }}>
+            {typeof createResult === "string" ? (
+              <a href={createResult}>{createResult}</a>
+            ) : (
               <pre>{JSON.stringify(createResult, null, 2)}</pre>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        )}
 
         <hr />
         <h2>All Public Pastes</h2>
         <button onClick={loadAll}>Load All</button>
-        <div id="allPastes" style={{ marginTop: "1em" }}>
-          {allPastes.length ? (
-            allPastes.map((p) => (
-              <div
-                key={p.id}
-                style={{
-                  background: "#f7f7f7",
-                  padding: "1em",
-                  border: "1px solid #ccc",
-                  marginBottom: "1em",
-                }}
-              >
+        <div style={{ marginTop: "1em" }}>
+          {allPastes.length
+            ? allPastes.map((p) => (
+              <div key={p.slug} style={{ background: "#f7f7f7", padding: "1em", border: "1px solid #ccc", marginBottom: "1em" }}>
                 <b>{p.title || "No Title"}</b>
                 <br />
                 {p.content}
                 <br />
-                <small>ID: {p.id}</small>
+                <small>ID: {p.slug}</small>
               </div>
             ))
-          ) : (
-            <div>No pastes found.</div>
-          )}
+            : "No pastes found."}
         </div>
 
         <hr />
@@ -165,23 +168,11 @@ export default function CreatePaste() {
         />
         <button onClick={fetchPaste}>Fetch</button>
 
-        <div id="fetchResult" style={{ marginTop: "1em" }}>
-          {fetchResult && (
-            <div
-              style={{
-                background: "#f7f7f7",
-                padding: "1em",
-                border: "1px solid #ccc",
-              }}
-            >
-              {fetchResult.error ? (
-                <>ERROR: {fetchResult.error}</>
-              ) : (
-                <pre>{JSON.stringify(fetchResult, null, 2)}</pre>
-              )}
-            </div>
-          )}
-        </div>
+        {fetchResult && (
+          <div style={{ marginTop: "1em", background: "#f7f7f7", padding: "1em", border: "1px solid #ccc" }}>
+            {fetchResult.error ? `ERROR: ${fetchResult.error}` : <pre>{JSON.stringify(fetchResult, null, 2)}</pre>}
+          </div>
+        )}
       </div>
     </>
   );
