@@ -49,7 +49,7 @@ export function LoginForm({
               <Field>
                 <Button type="submit">Login</Button>
                 <Button variant="outline" type="button">
-                  Login with Google
+                  Login with Microsoft
                 </Button>
                 <FieldDescription className="text-center">
                   Don&apos;t have an account? <a href="/signup">Sign up</a>
