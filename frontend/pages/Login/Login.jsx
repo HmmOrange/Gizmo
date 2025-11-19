@@ -11,7 +11,7 @@ export default function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-
+  const [oauthLoading, setOauthLoading] = useState(false);
   async function handleLogin(e) {
     e.preventDefault();
     setError("");
