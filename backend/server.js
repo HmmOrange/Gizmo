@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import { connectDB } from "./config/db.js";
 import textPasteRoutes from "./routes/textPasteRoutes.js";
 import cors from "cors";
+import authRoutes from "./routes/auth.js";
 
 dotenv.config();
 
@@ -16,6 +17,7 @@ connectDB();
 // Routes
 app.use("/paste", textPasteRoutes);
 app.get('/health', (req, res) => res.send('OK'));
+app.use("/api/auth", authRoutes);
 
 // Start server
 const PORT = process.env.PORT || 5000;
