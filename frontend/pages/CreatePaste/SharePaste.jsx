@@ -15,8 +15,10 @@ export default function SharePaste() {
         setLoading(true);
         let url = `${API_BASE}/${encodeURIComponent(id)}`;
         if (pw) url += `?password=${encodeURIComponent(pw)}`;
+
         const res = await fetch(url);
         const json = await res.json();
+
         if (json.error === "Password required or incorrect") {
             setNeedsPassword(true);
             setPaste(null);
@@ -41,12 +43,52 @@ export default function SharePaste() {
         fetchPaste(password);
     };
 
+    const handleExport = async (format) => {
+        const url = `${API_BASE}/${encodeURIComponent(id)}/export?format=${format}`;
+
+        const response = await fetch(url);
+        if (!response.ok) {
+            alert("Export failed.");
+            return;
+        }
+
+        const blob = await response.blob();
+        const link = document.createElement("a");
+
+        const ext = format === "raw" ? "md" : format;
+        link.download = `${id}.${ext}`;
+
+        link.href = window.URL.createObjectURL(blob);
+        link.click();
+
+        window.URL.revokeObjectURL(link.href);
+    };
+
+    const handleSummary = async () => {
+        const url = `${API_BASE}/${encodeURIComponent(id)}/summary`;
+
+        const res = await fetch(url);
+        const json = await res.json();
+
+        if (json.summary) {
+            alert("SUMMARY:\n\n" + json.summary);
+        } else {
+            alert("Failed to summarize");
+        }
+    };
+
     return (
         <div style={{
-            maxWidth: 700, margin: "2em auto", fontFamily: "Menlo, Monaco, monospace",
-            background: "#222", color: "#fff", padding: "2em", borderRadius: "8px"
+            maxWidth: 700,
+            margin: "2em auto",
+            fontFamily: "Menlo, Monaco, monospace",
+            background: "#222",
+            color: "#fff",
+            padding: "2em",
+            borderRadius: "8px"
         }}>
             {loading && <div>Loading...</div>}
+
             {!loading && needsPassword && (
                 <form onSubmit={onSubmitPassword}>
                     <div style={{ marginBottom: "1em", color: "#d66" }}>
@@ -63,28 +105,64 @@ export default function SharePaste() {
                     {error && <div style={{ color: "#d66" }}>{error}</div>}
                 </form>
             )}
+
             {!loading && paste && (
                 <>
                     <h2 style={{ color: "#97c5f7" }}>
                         {paste.title || "Untitled Paste"}
-                        {paste.private && " (PRIVATE)"}
                     </h2>
+
                     <pre style={{
                         whiteSpace: "pre-wrap",
                         wordBreak: "break-word",
                         background: "#151515",
                         padding: "1em",
                         borderRadius: "4px"
-                    }}>{paste.content}</pre>
+                    }}>
+                        {paste.content}
+                    </pre>
+
                     {paste.date_of_expiry && (
                         <div style={{ fontSize: "0.8em", color: "#d66" }}>
                             Expires: {new Date(paste.date_of_expiry).toLocaleString()}
                         </div>
                     )}
+
+                    <div style={{ marginTop: "1.5em" }}>
+                        <button
+                            onClick={() => handleExport("raw")}
+                            style={{ marginRight: 10 }}
+                        >
+                            Export RAW
+                        </button>
+
+                        <button
+                            onClick={() => handleExport("png")}
+                            style={{ marginRight: 10 }}
+                        >
+                            Export PNG
+                        </button>
+
+                        <button
+                            onClick={() => handleExport("pdf")}
+                        >
+                            Export PDF
+                        </button>
+                    </div>
+
+                    <button
+                        onClick={handleSummary}
+                        style={{ marginLeft: 10, background: "#4caf50", color: "#fff" }}
+                    >
+                        Summarize
+                    </button>
                 </>
             )}
+
             {error && !needsPassword && (
-                <div style={{ color: "#d66", fontWeight: "bold" }}>ERROR: {error}</div>
+                <div style={{ color: "#d66", fontWeight: "bold" }}>
+                    ERROR: {error}
+                </div>
             )}
         </div>
     );

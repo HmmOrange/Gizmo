@@ -12,7 +12,6 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [oauthLoading, setOauthLoading] = useState(false);
-
   async function handleLogin(e) {
     e.preventDefault();
     setError("");
@@ -29,7 +28,7 @@ export default function Login() {
       setError(data.message || "Login failed");
       return;
     }
-
+    localStorage.setItem("token", data.token);
     login(data.token);
     toast.success("Logged in successfully!");
     setTimeout(() => navigate("/"), 1000);
