@@ -19,6 +19,8 @@
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.19.2",
+    "pdfkit": "^0.17.2",
+    "puppeteer": "^24.30.0",
     "uuid": "^8.3.2"
   },
   "devDependencies": {
