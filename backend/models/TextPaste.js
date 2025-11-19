@@ -2,11 +2,6 @@ import mongoose, { Schema, model } from "mongoose";
 
 const PasteSchema = new Schema(
   {
-    pasteId: {
-      type: String,
-      required: true,
-      unique: true,
-    },
     slug: {
       type: String,
       unique: true,
