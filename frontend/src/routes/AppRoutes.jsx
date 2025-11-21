@@ -21,7 +21,7 @@ export default function AppRoutes() {
         <Route path="/create/paste" element={<CreatePaste />} />
         <Route path="/edit/:id" element={<EditPaste />} />
         <Route path="/create/image" element={<CreateImage />} />
-        <Route path="/share/image/:id" element={<ShareImage />} />
+        <Route path="/share/image/:slug" element={<ShareImage />} />
         <Route path="/auth/success" element={<AuthCallback />} />
       </Routes>
     </BrowserRouter>
