@@ -160,6 +160,21 @@ export default function SharePaste() {
                     >
                         Summarize
                     </button>
+                    {paste.authorId && token && JSON.parse(atob(token.split(".")[1]))?.user_id === paste.authorId && (
+                        <button
+                            onClick={() => window.location.href = `/edit/${id}`}
+                            style={{
+                                marginLeft: 10,
+                                background: "#ffb300",
+                                color: "#000",
+                                fontWeight: "bold",
+                                padding: "0.5em 1em",
+                                borderRadius: 4
+                            }}
+                        >
+                            Edit Paste
+                        </button>
+                    )}
                 </>
             )}
 
