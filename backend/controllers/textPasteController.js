@@ -68,7 +68,7 @@ export const getPasteById = async (req, res) => {
     if (!paste) {
       return res.status(404).json({ message: "Paste not found or expired" });
     }
-    console.log(paste)
+    // console.log(paste)
     if (paste.exposure === "private") {
       if (!req.user || req.user?.user_id !== paste.authorId) {
         return res.status(403).json({ error: "Access denied" });
@@ -77,16 +77,50 @@ export const getPasteById = async (req, res) => {
       const inputPassword = req.query.password || "";
       console.log("inputPassword:", inputPassword)
       if (!bcrypt.compareSync(inputPassword, paste.hashedPassword)) {
-        console.log("wrong")
+        // console.log("wrong")
         return res.status(403).json({ error: "Password required or incorrect" });
       }
     }
-
+    paste.views++;
+    await paste.save();
     res.json(paste);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 };
+
+export const updatePaste = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, content, expiredAt } = req.body;
+
+    const paste = await Paste.findOne({ slug: id });
+
+    if (!paste) {
+      return res.status(404).json({ error: "Paste not found" });
+    }
+
+    if (!req.user || req.user.user_id !== paste.authorId) {
+      return res.status(403).json({ error: "You are not the owner of this paste" });
+    }
+    console.log("Updating paste:", content);
+    if (title) paste.title = title;
+    if (content) paste.content = content;
+    if (expiredAt !== undefined) paste.expiredAt = expiredAt ? new Date(expiredAt) : null;
+
+    await paste.save();
+
+    res.json({
+      message: "Paste updated successfully",
+      paste
+    });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
 
 export const exportPaste = async (req, res) => {
   try {
@@ -140,3 +174,4 @@ export const summarizePaste = async (req, res) => {
     res.status(500).json({ error: "Error summarizing paste" });
   }
 };
+
