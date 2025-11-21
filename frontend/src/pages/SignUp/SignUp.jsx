@@ -5,30 +5,30 @@ import { SignupForm } from "@/components/signup-form";
 
 export default function SignUp() {
   const navigate = useNavigate();
+
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [fullName, setFullName] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [error, setError] = useState("");
 
   async function handleSignUp(e) {
     e.preventDefault();
-    setError("");
 
     if (password !== confirmPassword) {
-      setError("Passwords do not match");
+      toast.error("Passwords do not match");
       return;
     }
 
     const res = await fetch("/api/auth/signup", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, password })
+      body: JSON.stringify({ username, password, name: fullName }),
     });
 
     const data = await res.json();
 
     if (!res.ok) {
-      setError(data.message || "Sign up failed");
+      toast.error(data.message || "Sign up failed");
       return;
     }
 
@@ -36,10 +36,25 @@ export default function SignUp() {
     setTimeout(() => navigate("/login"), 1000);
   }
 
+  function handleGoogleSignup() {
+    window.location.href = "/api/auth/oauth/google";
+  }
+
   return (
     <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
       <div className="w-full max-w-sm">
-        <SignupForm />
+        <SignupForm
+          username={username}
+          fullName={fullName}
+          password={password}
+          confirmPassword={confirmPassword}
+          onUsernameChange={(e) => setUsername(e.target.value)}
+          onPasswordChange={(e) => setPassword(e.target.value)}
+          onFullNameChange={(e) => setFullName(e.target.value)}
+          onConfirmPasswordChange={(e) => setConfirmPassword(e.target.value)}
+          onSubmit={handleSignUp}
+          onGoogleSignup={handleGoogleSignup}
+        />
       </div>
     </div>
   );

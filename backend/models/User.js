@@ -10,6 +10,11 @@ const UserSchema = new Schema(
       // minlength: 3,
       index: true,
     },
+    name: {
+      type: String,
+      required: true,
+      trim: true,
+    },
     hashedPassword: { type: String, default: null },
     avatarUrl: { type: String, default: null },
     storageUsed: { type: Number, default: 0, min: 0 },
