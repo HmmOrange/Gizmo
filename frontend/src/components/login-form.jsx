@@ -39,11 +39,11 @@ export function LoginForm({
           <form onSubmit={onSubmit}>
             <FieldGroup>
               <Field>
-                <FieldLabel htmlFor="email">Email</FieldLabel>
+                <FieldLabel htmlFor="username">Username</FieldLabel>
                 <Input
-                  id="email"
+                  id="username"
                   type="text"
-                  placeholder="username"
+                  placeholder="Enter your username."
                   required
                   value={username}
                   onChange={onUsernameChange}
@@ -57,6 +57,7 @@ export function LoginForm({
                 <Input
                   id="password"
                   type="password"
+                  placeholder="Enter your password."
                   required
                   value={password}
                   onChange={onPasswordChange}
