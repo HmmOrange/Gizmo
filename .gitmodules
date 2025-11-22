@@ -1,0 +1,3 @@
+[submodule "gizmo-frontend"]
+	path = gizmo-frontend
+	url = https://github.com/HmmOrange/gizmo-frontend
