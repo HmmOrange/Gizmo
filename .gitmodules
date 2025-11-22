@@ -1,3 +1,6 @@
 [submodule "gizmo-frontend"]
 	path = gizmo-frontend
 	url = https://github.com/HmmOrange/gizmo-frontend
+[submodule "gizmo-backend"]
+	path = gizmo-backend
+	url = https://github.com/HmmOrange/gizmo-backend
