@@ -56,7 +56,7 @@ export async function handleMicrosoftCallback(req, res) {
 
   if (!req.query.code) {
     console.log("❌ No `code` received in callback. Something is wrong.");
-    return res.redirect("http://localhost:5173/login?error=missing_code");
+    return res.redirect(`${FRONTEND_URL}/login?error=missing_code`);
   }
 
   const tokenRequest = {
@@ -127,11 +127,11 @@ export async function handleMicrosoftCallback(req, res) {
 
     console.log("🎫 JWT Created:", jwtToken);
 
-    res.redirect(`http://localhost:5173/auth/success?token=${encodeURIComponent(jwtToken)}`);
+    res.redirect(`${FRONTEND_URL}/auth/success?token=${encodeURIComponent(jwtToken)}`);
   } catch (error) {
     console.error("\n❌ FATAL OAUTH ERROR in callback:");
     console.error(error);
 
-    return res.redirect("http://localhost:5173/login?error=oauth_failed");
+    return res.redirect(`${FRONTEND_URL}/login?error=oauth_failed`);
   }
 }
