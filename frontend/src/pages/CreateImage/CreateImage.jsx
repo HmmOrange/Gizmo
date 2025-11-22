@@ -1,4 +1,3 @@
-// CreateImage.jsx - FINAL: Giữ nguyên Undo/Redo + Custom slug + Upload button
 import React, { useRef, useEffect, useState, useCallback } from "react";
 import axios from "axios";
 
@@ -7,126 +6,161 @@ const CreateImage = ({ onClose }) => {
   const ctxRef = useRef(null);
   const isDrawing = useRef(false);
 
-  // States
-  const [tool, setTool] = useState("pen");
-  const [color, setColor] = useState("#000000");
-  const [size, setSize] = useState(5);
-  const [customSlug, setCustomSlug] = useState("");     // ← Người dùng nhập slug
+  // Album info
+  const [albumTitle, setAlbumTitle] = useState("");
+  const [albumSlug, setAlbumSlug] = useState(""); // slug chung cho cả album (tùy chọn)
+
+  // Images array - mỗi ảnh có dữ liệu riêng
+  const [images, setImages] = useState([]);
+  const [selectedIdx, setSelectedIdx] = useState(null);
+
+  // Upload status
   const [isUploading, setIsUploading] = useState(false);
   const [shareLink, setShareLink] = useState("");
-
-  // Undo/Redo history
-  const [history, setHistory] = useState([]);
-  const [historyStep, setHistoryStep] = useState(-1);
 
   const MAX_WIDTH = 900;
   const MAX_HEIGHT = 700;
 
-  // Save current canvas state
-  const saveState = useCallback(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const dataURL = canvas.toDataURL();
-
-    setHistory(prev => {
-      const newHist = prev.slice(0, historyStep + 1);
-      newHist.push(dataURL);
-      if (newHist.length > 50) newHist.shift();
-      setHistoryStep(newHist.length - 1);
-      return newHist;
-    });
-  }, [historyStep]);
-
-  // Restore canvas from history
-  const restoreState = (step) => {
-    if (history[step] === undefined) return;
-    const img = new Image();
-    img.onload = () => {
-      const ctx = ctxRef.current;
-      ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
-      ctx.drawImage(img, 0, 0);
-    };
-    img.src = history[step];
-  };
-
-  const undo = () => {
-    if (historyStep > 0) {
-      setHistoryStep(historyStep - 1);
-      restoreState(historyStep - 1);
-    }
-  };
-
-  const redo = () => {
-    if (historyStep < history.length - 1) {
-      setHistoryStep(historyStep + 1);
-      restoreState(historyStep + 1);
-    }
-  };
-
-  // Init canvas
+  // ================= CANVAS INIT =================
   useEffect(() => {
+    if (!canvasRef.current || selectedIdx === null) return;
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
     ctxRef.current = ctx;
-
-    canvas.width = MAX_WIDTH;
-    canvas.height = MAX_HEIGHT;
-
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
+  }, [selectedIdx]);
 
-    saveState(); // lưu trạng thái ban đầu
-  }, []);
-
-  // Update pen/eraser style
+  // Update stroke style khi thay đổi công cụ
   useEffect(() => {
-    if (ctxRef.current) {
-      ctxRef.current.strokeStyle = tool === "eraser" ? "#ffffff" : color;
-      ctxRef.current.lineWidth = size;
+    if (ctxRef.current && selectedIdx !== null) {
+      const img = images[selectedIdx];
+      ctxRef.current.strokeStyle = img.tool === "eraser" ? "#ffffff" : img.color;
+      ctxRef.current.lineWidth = img.size;
     }
-  }, [tool, color, size]);
+  }, [images, selectedIdx]);
 
-  // Resize canvas + draw uploaded image
-  const loadImageToCanvas = (img) => {
-    const canvas = canvasRef.current;
-    const ctx = ctxRef.current;
+  // ================= SAVE & RESTORE STATE PER IMAGE =================
+  const saveState = useCallback(() => {
+    if (selectedIdx === null || !canvasRef.current) return;
+    const dataURL = canvasRef.current.toDataURL();
 
-    let w = img.width;
-    let h = img.height;
-    if (w > MAX_WIDTH || h > MAX_HEIGHT) {
-      const ratio = Math.min(MAX_WIDTH / w, MAX_HEIGHT / h);
-      w *= ratio;
-      h *= ratio;
-    }
+    setImages(prev => {
+      const updated = [...prev];
+      const img = updated[selectedIdx];
+      const newHistory = img.canvasState.slice(0, img.historyStep + 1);
+      newHistory.push(dataURL);
+      if (newHistory.length > 50) newHistory.shift();
 
-    canvas.width = w;
-    canvas.height = h;
+      img.canvasState = newHistory;
+      img.historyStep = newHistory.length - 1;
+      return updated;
+    });
+  }, [selectedIdx]);
 
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, w, h);
-    ctx.drawImage(img, 0, 0, w, h);
+  const loadCurrentImage = () => {
+    if (selectedIdx === null) return;
+    const imgData = images[selectedIdx];
+    const img = new Image();
+    img.onload = () => {
+      const canvas = canvasRef.current;
+      const ctx = canvas.getContext("2d");
+      const ratio = Math.min(MAX_WIDTH / img.width, MAX_HEIGHT / img.height, 1);
+      const w = img.width * ratio;
+      const h = img.height * ratio;
 
-    setHistory([]);
-    setHistoryStep(-1);
-    saveState();
-  };
+      canvas.width = w;
+      canvas.height = h;
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, w, h);
+      ctx.drawImage(img, 0, 0, w, h);
 
-  const handleImageUpload = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      const img = new Image();
-      img.onload = () => loadImageToCanvas(img);
-      img.src = ev.target.result;
+      if (imgData.canvasState.length > 0) {
+        const lastState = imgData.canvasState[imgData.historyStep];
+        if (lastState) {
+          const overlay = new Image();
+          overlay.onload = () => ctx.drawImage(overlay, 0, 0, w, h);
+          overlay.src = lastState;
+        }
+      }
     };
-    reader.readAsDataURL(file);
+    img.src = imgData.preview;
   };
 
-  // Drawing handlers
+  useEffect(() => {
+    if (selectedIdx !== null) loadCurrentImage();
+  }, [selectedIdx]);
+
+  // ================= UNDO / REDO =================
+  const undo = () => {
+    if (selectedIdx === null) return;
+    const img = images[selectedIdx];
+    if (img.historyStep <= 0) return;
+    setImages(prev => {
+      const updated = [...prev];
+      updated[selectedIdx].historyStep -= 1;
+      return updated;
+    });
+  };
+
+  const redo = () => {
+    if (selectedIdx === null) return;
+    const img = images[selectedIdx];
+    if (img.historyStep >= img.canvasState.length - 1) return;
+    setImages(prev => {
+      const updated = [...prev];
+      updated[selectedIdx].historyStep += 1;
+      return updated;
+    });
+  };
+
+  // ================= UPLOAD MULTIPLE IMAGES =================
+  const handleUpload = (e) => {
+    const files = Array.from(e.target.files);
+    const newImages = files.map((file, i) => ({
+      file,
+      preview: URL.createObjectURL(file),
+      name: file.name,
+      slug: "", // slug riêng từng ảnh
+      canvasState: [],
+      historyStep: -1,
+      tool: "pen",
+      color: "#000000",
+      size: 5,
+    }));
+
+    setImages(prev => [...prev, ...newImages]);
+    if (selectedIdx === null && newImages.length > 0) {
+      setSelectedIdx(0);
+    }
+  };
+
+  const selectImage = (idx) => {
+    if (selectedIdx !== null) saveState();
+    setSelectedIdx(idx);
+  };
+
+  const removeImage = (idx) => {
+    setImages(prev => prev.filter((_, i) => i !== idx));
+    if (selectedIdx === idx) {
+      setSelectedIdx(images.length <= 1 ? null : 0);
+    } else if (selectedIdx > idx) {
+      setSelectedIdx(selectedIdx - 1);
+    }
+  };
+
+  const updateImageProp = (prop, value) => {
+    if (selectedIdx === null) return;
+    setImages(prev => {
+      const updated = [...prev];
+      updated[selectedIdx][prop] = value;
+      return updated;
+    });
+  };
+
+  // ================= DRAWING HANDLERS =================
   const start = (e) => {
+    if (!canvasRef.current) return;
     const rect = canvasRef.current.getBoundingClientRect();
     const x = (e.clientX || e.touches?.[0]?.clientX) - rect.left;
     const y = (e.clientY || e.touches?.[0]?.clientY) - rect.top;
@@ -136,12 +170,11 @@ const CreateImage = ({ onClose }) => {
     ctxRef.current.beginPath();
     ctxRef.current.moveTo(x * scaleX, y * scaleY);
     isDrawing.current = true;
-
-    saveState(); // lưu trước mỗi nét mới
+    saveState();
   };
 
   const draw = (e) => {
-    if (!isDrawing.current) return;
+    if (!isDrawing.current || !canvasRef.current) return;
     const rect = canvasRef.current.getBoundingClientRect();
     const x = (e.clientX || e.touches?.[0]?.clientX) - rect.left;
     const y = (e.clientY || e.touches?.[0]?.clientY) - rect.top;
@@ -153,133 +186,179 @@ const CreateImage = ({ onClose }) => {
   };
 
   const stop = () => {
-    if (isDrawing.current) {
-      ctxRef.current.closePath();
-      isDrawing.current = false;
-    }
+    if (isDrawing.current) isDrawing.current = false;
   };
 
   const clearCanvas = () => {
-    const ctx = ctxRef.current;
+    if (!canvasRef.current) return;
+    const ctx = canvasRef.current.getContext("2d");
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, canvasRef.current.width, canvasRef.current.height);
     saveState();
   };
 
-  // ←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←
-  // NƠI ĐÂY SẼ GẮN LOGIC UPLOAD LÊN S3 + MONGODB
-  // ←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←
-  const handleSaveAndShare = async () => {
+  // ================= UPLOAD TO S3 + CREATE ALBUM =================
+  const handleCreateAlbum = async () => {
+    if (images.length === 0) return alert("Please upload at least one image!");
+    if (selectedIdx !== null) saveState(); // lưu ảnh đang chỉnh sửa
+
     setIsUploading(true);
 
     try {
-      const canvas = canvasRef.current;
-      canvas.toBlob(async (blob) => {
-        const finalSlug = customSlug.trim() || `drawing-${Date.now()}`;
+      const albumId = albumSlug.trim() || `album-${Date.now()}`;
+      const uploadedImages = [];
+
+      // Duyệt từng ảnh và upload lần lượt
+      for (let i = 0; i < images.length; i++) {
+        const imgData = images[i];
+
+        // Lưu trạng thái canvas mới nhất cho ảnh này
+        if (selectedIdx === i) saveState();
+        else {
+          // Tạm chọn ảnh i để lấy canvas đúng
+          setSelectedIdx(i);
+          await new Promise(resolve => setTimeout(resolve, 50)); // chờ canvas render
+          saveState();
+        }
+
+        const canvas = canvasRef.current;
+        const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/png", 0.95));
+
+        const finalSlug = imgData.slug.trim() || `image-${i + 1}`;
 
         const formData = new FormData();
         formData.append("image", blob, `${finalSlug}.png`);
         formData.append("slug", finalSlug);
+        formData.append("albumId", albumId);
+        formData.append("albumTitle", albumTitle || "My Album");
 
-        // TODO: Gửi lên backend ở đây
-        // ... trong handleSaveAndShare, thay phần try { ... }
-        try {
-          const canvas = canvasRef.current;
-          const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/png"));
+        const res = await axios.post("http://localhost:3000/api/images", formData, {
+          headers: { "Content-Type": "multipart/form-data" }
+        });
 
-          const finalSlug = customSlug.trim() || `draw-${Date.now()}`;
+        uploadedImages.push(res.data.imageUrl);
+      }
 
-          const formData = new FormData();
-          formData.append("image", blob, `${finalSlug}.png`);
-          formData.append("slug", finalSlug);
-
-          const res = await axios.post("http://localhost:3000/api/images", formData);
-          
-          setShareLink(res.data.shareLink);
-          alert(`Thành công!\nLink chia sẻ:\n${res.data.shareLink}`);
-        } catch (err) {
-          console.error(err);
-          alert("Upload thất bại: " + (err.response?.data?.message || err.message));
-        }
-      }, "image/png");
+      const albumLink = `https://gizmo.app/album/${albumId}`;
+      setShareLink(albumLink);
+      alert(`Album created successfully!\nLink: ${albumLink}\n${images.length} images uploaded!`);
     } catch (err) {
-      alert("Error: " + err.message);
+      console.error("Upload error:", err);
+      alert("Upload failed: " + (err.response?.data?.message || err.message || "Please check server console"));
     } finally {
       setIsUploading(false);
     }
   };
 
+  const currentImage = selectedIdx !== null ? images[selectedIdx] : null;
+
   return (
-    <div style={{ padding: 20, background: "#f8f9fa", minHeight: "100vh", fontFamily: "system-ui, sans-serif" }}>
-      <h2 style={{ margin: "0 0 16px", color: "#222" }}>Draw & Share</h2>
+    <div style={{ display: "flex", gap: 24, padding: 20, background: "#f5f7fa", minHeight: "100vh", fontFamily: "system-ui, sans-serif" }}>
+      {/* LEFT PANEL */}
+      <div style={{ width: 380, background: "white", borderRadius: 12, boxShadow: "0 4px 20px rgba(0,0,0,0.1)", padding: 20 }}>
+        <h2>Create Album</h2>
 
-      <div style={{ marginBottom: 16, display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center" }}>
-        <button onClick={() => setTool("pen")} style={{ fontWeight: tool === "pen" ? "bold" : "normal" }}>Pen</button>
-        <button onClick={() => setTool("eraser")} style={{ fontWeight: tool === "eraser" ? "bold" : "normal" }}>Eraser</button>
-
-        <input type="color" value={color} onChange={(e) => setColor(e.target.value)} disabled={tool === "eraser"} />
-        <input type="range" min="1" max="50" value={size} onChange={(e) => setSize(+e.target.value)} style={{ width: 120 }} />
-        <span>{size}px</span>
-
-        <button onClick={undo} disabled={historyStep <= 0}>Undo</button>
-        <button onClick={redo} disabled={historyStep >= history.length - 1}>Redo</button>
-        <button onClick={clearCanvas} style={{ background: "#e74c3c", color: "white" }}>Clear</button>
-
-        <label style={{ background: "#3498db", color: "white", padding: "8px 12px", cursor: "pointer" }}>
-          Upload Image
-          <input type="file" accept="image/*" onChange={handleImageUpload} style={{ display: "none" }} />
-        </label>
-
-        {/* CUSTOM SLUG INPUT */}
         <input
           type="text"
-          placeholder="Custom URL (optional)"
-          value={customSlug}
-          onChange={(e) => setCustomSlug(e.target.value)}
-          style={{ padding: "8px 10px", width: 200, border: "1px solid #ccc", borderRadius: 4 }}
+          placeholder="Album title (optional)"
+          value={albumTitle}
+          onChange={e => setAlbumTitle(e.target.value)}
+          style={{ width: "100%", padding: 12, marginBottom: 12, borderRadius: 8, border: "1px solid #ddd" }}
         />
 
-        {/* UPLOAD BUTTON */}
+        <input
+          type="text"
+          placeholder="Album URL (optional)"
+          value={albumSlug}
+          onChange={e => setAlbumSlug(e.target.value)}
+          style={{ width: "100%", padding: 12, marginBottom: 16, borderRadius: 8, border: "1px solid #ddd" }}
+        />
+
+        <label style={{ display: "block", background: "#3498db", color: "white", padding: 14, borderRadius: 8, textAlign: "center", cursor: "pointer", fontWeight: "bold" }}>
+          Upload Images
+          <input type="file" accept="image/*" multiple onChange={handleUpload} style={{ display: "none" }} />
+        </label>
+
+        {images.length > 0 && (
+          <div style={{ marginTop: 20 }}>
+            <h4>Images ({images.length})</h4>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+              {images.map((img, i) => (
+                <div key={i} onClick={() => selectImage(i)} style={{ position: "relative", border: selectedIdx === i ? "4px solid #3498db" : "2px solid #eee", borderRadius: 8, overflow: "hidden", cursor: "pointer" }}>
+                  <img src={img.preview} alt="" style={{ width: "100%", height: 100, objectFit: "cover" }} />
+                  <button onClick={e => { e.stopPropagation(); removeImage(i); }} style={{ position: "absolute", top: 4, right: 4, background: "rgba(0,0,0,0.7)", color: "white", borderRadius: "50%", width: 24, height: 24, border: "none" }}>×</button>
+                  {selectedIdx === i && <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "rgba(52,152,219,0.9)", color: "white", padding: 4, fontSize: 12, textAlign: "center" }}>EDITING</div>}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         <button
-          onClick={handleSaveAndShare}
-          disabled={isUploading}
-          style={{
-            background: isUploading ? "#95a5a6" : "#27ae60",
-            color: "white",
-            padding: "10px 20px",
-            fontWeight: "bold",
-            borderRadius: 4,
-          }}
+          onClick={handleCreateAlbum}
+          disabled={isUploading || images.length === 0}
+          style={{ marginTop: 24, width: "100%", padding: 16, background: isUploading ? "#95a5a6" : "#27ae60", color: "white", border: "none", borderRadius: 10, fontSize: 18, fontWeight: "bold" }}
         >
-          {isUploading ? "Uploading..." : "Save & Share"}
+          {isUploading ? "Uploading Album..." : "Create Album & Share"}
         </button>
 
-        {onClose && <button onClick={onClose} style={{ background: "#7f8c8d", color: "white" }}>Close</button>}
+        {shareLink && (
+          <div style={{ marginTop: 16, padding: 16, background: "#d4edda", borderRadius: 10, textAlign: "center", fontWeight: "bold" }}>
+            Album ready!<br />
+            <a href={shareLink} target="_blank" rel="noopener noreferrer" style={{ color: "#27ae60" }}>{shareLink}</a>
+          </div>
+        )}
       </div>
 
-      {/* Share link */}
-      {shareLink && (
-        <div style={{ margin: "12px 0", padding: 12, background: "#d4edda", borderRadius: 6, fontWeight: "bold" }}>
-          Share link: <a href={shareLink} target="_blank" rel="noopener noreferrer">{shareLink}</a>
+      {/* RIGHT PANEL - EDITOR */}
+      <div style={{ flex: 1, background: "white", borderRadius: 12, boxShadow: "0 4px 20px rgba(0,0,0,0.1)", padding: 20 }}>
+        <h2>Edit Image</h2>
+
+        {currentImage && (
+          <div style={{ marginBottom: 16 }}>
+            <label style={{ fontWeight: "bold" }}>Custom URL for this image</label>
+            <input
+              type="text"
+              placeholder="my-cool-drawing"
+              value={currentImage.slug}
+              onChange={e => updateImageProp("slug", e.target.value)}
+              style={{ width: "100%", padding: 12, marginTop: 6, borderRadius: 8, border: "1px solid #ddd" }}
+            />
+            <small>Link: gizmo.app/i/{currentImage.slug || "..."}</small>
+          </div>
+        )}
+
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginBottom: 20, alignItems: "center" }}>
+          <button onClick={() => updateImageProp("tool", "pen")} style={{ fontWeight: currentImage?.tool === "pen" ? "bold" : "normal" }}>Pen</button>
+          <button onClick={() => updateImageProp("tool", "eraser")} style={{ fontWeight: currentImage?.tool === "eraser" ? "bold" : "normal" }}>Eraser</button>
+          <input type="color" value={currentImage?.color || "#000000"} onChange={e => updateImageProp("color", e.target.value)} disabled={currentImage?.tool === "eraser"} />
+          <input type="range" min="1" max="50" value={currentImage?.size || 5} onChange={e => updateImageProp("size", +e.target.value)} style={{ width: 140 }} />
+          <span>{currentImage?.size || 5}px</span>
+          <button onClick={undo} disabled={!currentImage || currentImage.historyStep <= 0}>Undo</button>
+          <button onClick={redo} disabled={!currentImage || currentImage.historyStep >= currentImage.canvasState.length - 1}>Redo</button>
+          <button onClick={clearCanvas} style={{ background: "#e74c3c", color: "white" }}>Clear</button>
         </div>
-      )}
 
-      {/* Canvas */}
-      <div style={{ background: "white", borderRadius: 8, boxShadow: "0 4px 20px rgba(0,0,0,0.1)", display: "inline-block" }}>
-        <canvas
-          ref={canvasRef}
-          style={{ border: "2px solid #ddd", cursor: "crosshair", maxWidth: "100%", height: "auto" }}
-          onMouseDown={start}
-          onMouseMove={draw}
-          onMouseUp={stop}
-          onMouseLeave={stop}
-          onTouchStart={start}
-          onTouchMove={draw}
-          onTouchEnd={stop}
-        />
+        <div style={{ textAlign: "center", background: "#fafafa", borderRadius: 12, padding: 40, minHeight: 600 }}>
+          {selectedIdx === null ? (
+            <p style={{ color: "#888", fontSize: 20 }}>Upload and select an image to edit</p>
+          ) : (
+            <canvas
+              ref={canvasRef}
+              style={{ border: "2px solid #ddd", borderRadius: 8, maxWidth: "100%", cursor: "crosshair", boxShadow: "0 8px 30px rgba(0,0,0,0.12)" }}
+              onMouseDown={start}
+              onMouseMove={draw}
+              onMouseUp={stop}
+              onMouseLeave={stop}
+              onTouchStart={start}
+              onTouchMove={draw}
+              onTouchEnd={stop}
+            />
+          )}
+        </div>
       </div>
 
-    
+      {onClose && <button onClick={onClose} style={{ position: "fixed", top: 20, right: 20, padding: "12px 24px", background: "#34495e", color: "white", borderRadius: 8 }}>Close</button>}
     </div>
   );
 };
