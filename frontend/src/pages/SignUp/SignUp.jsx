@@ -10,6 +10,7 @@ export default function SignUp() {
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
   async function handleSignUp(e) {
     e.preventDefault();
@@ -36,8 +37,9 @@ export default function SignUp() {
     setTimeout(() => navigate("/login"), 1000);
   }
 
-  function handleGoogleSignup() {
-    window.location.href = "/api/auth/oauth/google";
+  function handleMicrosoftLogin() {
+    setLoading(true);
+    window.location.href = "/api/auth/oauth/microsoft";
   }
 
   return (
@@ -53,7 +55,8 @@ export default function SignUp() {
           onFullNameChange={(e) => setFullName(e.target.value)}
           onConfirmPasswordChange={(e) => setConfirmPassword(e.target.value)}
           onSubmit={handleSignUp}
-          onGoogleSignup={handleGoogleSignup}
+          onMicrosoftLogin={handleMicrosoftLogin}
+          loading={loading}
         />
       </div>
     </div>

@@ -76,9 +76,9 @@ export function SignupForm({
                 value={password}
                 onChange={onPasswordChange}
               />
-              <FieldDescription>
+              {/* <FieldDescription>
                 Must be at least 8 characters long.
-              </FieldDescription>
+              </FieldDescription> */}
             </Field>
 
             <Field>
@@ -93,7 +93,7 @@ export function SignupForm({
                 value={confirmPassword}
                 onChange={onConfirmPasswordChange}
               />
-              <FieldDescription>Please confirm your password.</FieldDescription>
+              {/* <FieldDescription>Please confirm your password.</FieldDescription> */}
             </Field>
 
             <FieldGroup>
