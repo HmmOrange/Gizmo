@@ -51,12 +51,11 @@ export function SignupForm({
             </Field>
 
             <Field>
-              <FieldLabel htmlFor="email">Username</FieldLabel>
+              <FieldLabel htmlFor="username">Username</FieldLabel>
               <Input
-                id="email"
-                // type="email"
+                id="username"
                 type="text"
-                placeholder="username123"
+                placeholder="Enter your username."
                 required
                 value={username}
                 onChange={onUsernameChange}
@@ -72,6 +71,7 @@ export function SignupForm({
               <Input
                 id="password"
                 type="password"
+                placeholder="Enter your password."
                 required
                 value={password}
                 onChange={onPasswordChange}
@@ -88,6 +88,7 @@ export function SignupForm({
               <Input
                 id="confirm-password"
                 type="password"
+                placeholder="Re-enter your password."
                 required
                 value={confirmPassword}
                 onChange={onConfirmPasswordChange}
@@ -100,7 +101,7 @@ export function SignupForm({
                 <Button type="submit">Create Account</Button>
 
                 <Button variant="outline" type="button" onClick={onGoogleSignup}>
-                  Sign up with Google
+                  Sign up with Microsoft
                 </Button>
 
                 <FieldDescription className="px-6 text-center">
