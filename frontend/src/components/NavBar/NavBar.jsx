@@ -2,7 +2,6 @@ import React, { useContext } from 'react';
 import { useNavigate } from "react-router-dom";
 import '../../styles.css';
 import { AuthContext } from "../../context/AuthContext";
-import logo from '../../assets/logo.png';
 import { Navbar01 } from '@/components/ui/shadcn-io/navbar-01';
 
 export default function NavBar() {
