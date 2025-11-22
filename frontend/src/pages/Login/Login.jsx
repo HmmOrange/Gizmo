@@ -30,7 +30,7 @@ export default function Login() {
       toast.error(data.message || "Login failed");
       return;
     }
-
+    localStorage.setItem("token", data.token);
     login(data.token);
     toast.success("Logged in successfully!");
     setTimeout(() => navigate("/"), 1000);
