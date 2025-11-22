@@ -3,11 +3,10 @@ import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 
 export async function signup(req, res) {
-  const { username, password } = req.body;
+  const { username, password, name } = req.body;
 
-  if (!username || !password) {
-    return res.status(400).json({ message: "missing_fields" });
-  }
+  if (!username || !password || !name)
+  return res.status(400).json({ message: "missing_fields" });
 
   const existing = await User.findOne({ username });
   if (existing) {
@@ -18,6 +17,7 @@ export async function signup(req, res) {
 
   await User.create({
     username,
+    name,
     hashedPassword: hash,
     authMethod: null,   // explicit so format stays consistent
     storageUsed: 0,     // optional since default exists

@@ -16,9 +16,8 @@ const AlbumSchema = new Schema({
     type: String,
     default: "",
   },
-  author: {
-    type: Schema.Types.ObjectId,
-    ref: "User",
+  authorId: {
+    type: String,
     required: true,
   },
   createdAt: {

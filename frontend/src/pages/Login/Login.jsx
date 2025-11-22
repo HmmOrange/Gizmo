@@ -11,11 +11,11 @@ export default function Login() {
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [oauthLoading, setOauthLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
+
   async function handleLogin(e) {
     e.preventDefault();
-    setError("");
+    setLoading(true);
 
     const res = await fetch("/api/auth/login", {
       method: "POST",
@@ -24,26 +24,35 @@ export default function Login() {
     });
 
     const data = await res.json();
+    setLoading(false);
 
     if (!res.ok) {
-      setError(data.message || "Login failed");
+      toast.error(data.message || "Login failed");
       return;
     }
-    localStorage.setItem("token", data.token);
+
     login(data.token);
     toast.success("Logged in successfully!");
     setTimeout(() => navigate("/"), 1000);
   }
 
   function handleMicrosoftLogin() {
-    setOauthLoading(true);
+    setLoading(true);
     window.location.href = "/api/auth/oauth/microsoft";
   }
 
   return (
     <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
       <div className="w-full max-w-sm">
-        <LoginForm />
+        <LoginForm
+          username={username}
+          password={password}
+          onUsernameChange={(e) => setUsername(e.target.value)}
+          onPasswordChange={(e) => setPassword(e.target.value)}
+          onSubmit={handleLogin}
+          onMicrosoftLogin={handleMicrosoftLogin}
+          loading={loading}
+        />
       </div>
     </div>
   );

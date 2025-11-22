@@ -2,6 +2,7 @@ import mongoose, { Schema, model } from "mongoose";
 
 const ImageSchema = new Schema(
   {
+    caption: { type: String, default: "" },
     slug: {
       type: String,
       required: true,
@@ -22,7 +23,6 @@ const ImageSchema = new Schema(
       default: "public",
       required: true,
     },
-    caption: { type: String, default: "" },
     views: { type: Number, default: 0 },
     expiredAt: { type: Date, default: null },
     authorId: {
