@@ -13,9 +13,25 @@ Project nhóm 5
 
 # Cách chạy
 
+Nếu chạy lần đầu
+```bash
+git clone
+```
+
+Nếu đang làm
+```bash
+git pull
+```
+
+Sau đó clone mỗi submodule về:
+```bash
+git clone https://github.com/HmmOrange/gizmo-backend
+git clone https://github.com/HmmOrange/gizmo-frontend
+```
+
 ## Backend
 ```
-cd backend
+cd gizmo-backend
 ```
 
 Tạo file env như sau:
@@ -24,11 +40,19 @@ PORT=3000
 MONGO_URI=<một URI nào đó mà test>
 ```
 
-rồi `npm run dev` hoặc `node server.js`
+rồi 
+```bash 
+npm install
+npm run dev
+```
 
 ## Frontend
 ```
-cd frontend
+cd gizmo-frontend
 ```
 
-rồi `npm run dev`
+rồi
+```bash 
+npm install
+npm run dev
+```
