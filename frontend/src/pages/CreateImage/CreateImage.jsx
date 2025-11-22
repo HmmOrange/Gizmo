@@ -200,28 +200,37 @@ const CreateImage = ({ onClose }) => {
   // ================= UPLOAD TO S3 + CREATE ALBUM =================
   const handleCreateAlbum = async () => {
     if (images.length === 0) return alert("Please upload at least one image!");
-    if (selectedIdx !== null) saveState();
+    if (selectedIdx !== null) saveState(); // lưu ảnh đang chỉnh sửa
 
     setIsUploading(true);
 
     try {
-      const albumId = albumSlug || `album-${Date.now()}`;
+      const albumId = albumSlug.trim() || `album-${Date.now()}`;
       const uploadedImages = [];
 
+      // Duyệt từng ảnh và upload lần lượt
       for (let i = 0; i < images.length; i++) {
         const imgData = images[i];
-        saveState(); // đảm bảo ảnh cuối cùng được lưu
+
+        // Lưu trạng thái canvas mới nhất cho ảnh này
+        if (selectedIdx === i) saveState();
+        else {
+          // Tạm chọn ảnh i để lấy canvas đúng
+          setSelectedIdx(i);
+          await new Promise(resolve => setTimeout(resolve, 50)); // chờ canvas render
+          saveState();
+        }
 
         const canvas = canvasRef.current;
         const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/png", 0.95));
 
-        const finalSlug = imgData.slug.trim() || `${albumId}-${i + 1}`;
+        const finalSlug = imgData.slug.trim() || `image-${i + 1}`;
 
         const formData = new FormData();
         formData.append("image", blob, `${finalSlug}.png`);
         formData.append("slug", finalSlug);
         formData.append("albumId", albumId);
-        formData.append("albumTitle", albumTitle || "My Awesome Album");
+        formData.append("albumTitle", albumTitle || "My Album");
 
         const res = await axios.post("http://localhost:3000/api/images", formData, {
           headers: { "Content-Type": "multipart/form-data" }
@@ -232,10 +241,10 @@ const CreateImage = ({ onClose }) => {
 
       const albumLink = `https://gizmo.app/album/${albumId}`;
       setShareLink(albumLink);
-      alert(`Album created successfully!\nLink: ${albumLink}\n${uploadedImages.length} images uploaded!`);
+      alert(`Album created successfully!\nLink: ${albumLink}\n${images.length} images uploaded!`);
     } catch (err) {
-      console.error(err);
-      alert("Upload failed: " + (err.response?.data?.message || err.message));
+      console.error("Upload error:", err);
+      alert("Upload failed: " + (err.response?.data?.message || err.message || "Please check server console"));
     } finally {
       setIsUploading(false);
     }
