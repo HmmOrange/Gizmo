@@ -8,6 +8,7 @@ import cors from "cors";
 import authRoutes from "./routes/auth.js";
 import oauthRoutes from "./routes/authOAuth.js";
 import passport from "passport";
+import imageRoutes from "./routes/imageRoutes.js";
 
 const app = express();
 
@@ -22,6 +23,7 @@ app.use("/api/auth/oauth", oauthRoutes);
 app.use("/paste", textPasteRoutes);
 app.use("/api/auth", authRoutes);
 app.get("/health", (req, res) => res.send("OK"));
+app.use("/api/images", imageRoutes);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
